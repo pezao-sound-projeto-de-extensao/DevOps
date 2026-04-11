@@ -25,7 +25,7 @@ variable "public_subnet_cidr" {
 variable "public_subnet_name" {
   type        = string
   description = "Nome da subrede pública"
-  default     = "public_subnet_pezaosound"
+  default     = "public_subnet"
 }
 
 variable "public_subnet_availability_zone" {
@@ -37,7 +37,7 @@ variable "public_subnet_availability_zone" {
 variable "app_subnet_name" {
   type        = string
   description = "Nome da subrede de aplicação"
-  default     = "app_subnet_pezaosound"
+  default     = "app_subnet"
 }
 
 variable "app_subnet_1_cidr" {
@@ -64,4 +64,20 @@ variable "app_subnet_2_availability_zone" {
   default     = "b"
 }
 
+variable "db_subnet_name" {
+  type        = string
+  description = "Nome da subrede de banco de dados"
+  default     = "db_subnet"
+}
 
+variable "db_subnet_cidr" {
+  type        = string
+  description = "CIDR da subrede de banco de dados"
+  default     = "10.0.0.96/27"
+}
+
+variable "db_subnet_availability_zone" {
+  type        = string
+  description = "AZ da subrede de banco de dados"
+  default     = "a"
+}
