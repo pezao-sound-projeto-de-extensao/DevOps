@@ -82,4 +82,17 @@ locals {
       volume_size = 20
     }
   }
+  s3s = {
+    raw = {
+      name = "raw"
+    }
+
+    trusted = {
+      name = "trusted"
+    }
+
+    client = {
+      name = "client"
+    }
+  }
 }

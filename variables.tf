@@ -129,3 +129,15 @@ variable "instance_type" {
   description = "Tipo de instância"
   default     = "t3.micro"
 }
+
+variable "efs_token" {
+  type = string
+  description = "Token de criação do EFS"
+  default = "token"
+}
+
+variable "ebs_availability_zone" {
+  type = string
+  description = "AZ do EBS"
+  default = "a"
+}
