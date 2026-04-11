@@ -13,13 +13,13 @@ variable "vpc_name" {
 variable "vpc_cidr" {
   type        = string
   description = "CIDR da VPC"
-  default     = "10.0.0.0/24"
+  default     = "10.0.0.0/22"
 }
 
 variable "public_subnet_cidr" {
   type        = string
   description = "CIDR da subrede pública"
-  default     = "10.0.0.0/27"
+  default     = "10.0.0.0/24"
 }
 
 variable "public_subnet_name" {
@@ -43,13 +43,13 @@ variable "app_subnet_name" {
 variable "app_subnet_1_cidr" {
   type        = string
   description = "CIDR da subrede 1 de aplicação"
-  default     = "10.0.0.32/27"
+  default     = "10.0.1.0/25"
 }
 
 variable "app_subnet_2_cidr" {
   type        = string
   description = "CIDR da subrede 2 de aplicação"
-  default     = "10.0.0.64/27"
+  default     = "10.0.1.128/25"
 }
 
 variable "app_web_subnet_1_availability_zone" {
@@ -73,7 +73,7 @@ variable "db_subnet_name" {
 variable "db_subnet_cidr" {
   type        = string
   description = "CIDR da subrede de banco de dados"
-  default     = "10.0.0.96/27"
+  default     = "10.0.2.0/24"
 }
 
 variable "db_subnet_availability_zone" {
@@ -91,11 +91,23 @@ variable "web_subnet_name" {
 variable "web_subnet_1_cidr" {
   type        = string
   description = "CIDR da subrede 1 WEB"
-  default     = "10.0.0.128/27"
+  default     = "10.0.3.0/25"
 }
 
 variable "web_subnet_2_cidr" {
   type        = string
   description = "CIDR da subrede 2 web"
-  default     = "10.0.0.160/27"
+  default     = "10.0.3.128/25"
+}
+
+variable "nacl_app_cidr" {
+  type        = string
+  description = "CIDR para entrada personalizada na app"
+  default     = "10.0.3.0/24"
+}
+
+variable "nacl_web_cidr" {
+  type        = string
+  description = "CIDR para entrada personalizada na web"
+  default     = "10.0.0.0/24"
 }

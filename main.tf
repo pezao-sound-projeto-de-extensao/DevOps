@@ -55,7 +55,7 @@ resource "aws_default_route_table" "main_table" {
   }
 
   tags = {
-    Name = "private_router_table"
+    Name = "private-router-table"
   }
 }
 
@@ -68,7 +68,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "public_router_table"
+    Name = "public-router-table"
   }
 }
 
@@ -84,7 +84,7 @@ resource "aws_subnet" "subnet_app_1" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.app_subnet_name}_${var.vpc_name}_${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+    Name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
   }
 
 }
@@ -96,7 +96,7 @@ resource "aws_subnet" "subnet_app_2" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.app_subnet_name}_${var.vpc_name}_${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+    Name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
 
   }
 
@@ -109,7 +109,7 @@ resource "aws_subnet" "subnet_db" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.db_subnet_name}_${var.vpc_name}_${var.aws_region}${var.db_subnet_availability_zone}"
+    Name = "${var.db_subnet_name}-${var.vpc_name}-${var.aws_region}${var.db_subnet_availability_zone}"
   }
 
 }
@@ -121,7 +121,7 @@ resource "aws_subnet" "subnet_web_1" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.web_subnet_name}_${var.vpc_name}_${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+    Name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
 
   }
 
@@ -134,8 +134,113 @@ resource "aws_subnet" "subnet_web_2" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.web_subnet_name}_${var.vpc_name}_${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+    Name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
 
+  }
+
+}
+
+resource "aws_network_acl" "nacl_db" {
+  vpc_id = aws_vpc.main.id
+
+  subnet_ids = [aws_subnet.subnet_db.id]
+
+  ingress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
+  egress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "nacl-db"
+  }
+
+}
+
+resource "aws_network_acl" "nacl_app" {
+  vpc_id = aws_vpc.main.id
+
+  subnet_ids = [aws_subnet.subnet_app_1.id, aws_subnet.subnet_app_2.id]
+
+  ingress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = var.nacl_app_cidr
+    from_port  = 80
+    to_port    = 80
+  }
+
+  ingress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
+  egress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "nacl-app"
+  }
+
+}
+
+resource "aws_network_acl" "nacl_web" {
+  vpc_id = aws_vpc.main.id
+
+  subnet_ids = [aws_subnet.subnet_web_1.id, aws_subnet.subnet_web_2.id]
+
+  ingress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = var.nacl_web_cidr
+    from_port  = 80
+    to_port    = 80
+  }
+
+  ingress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
+  egress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "nacl-web"
   }
 
 }
