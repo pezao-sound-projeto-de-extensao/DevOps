@@ -19,3 +19,5 @@ terraform.tfvars
 *.tfvars.json
 
 .terraform.lock.hcl
+
+*.pem

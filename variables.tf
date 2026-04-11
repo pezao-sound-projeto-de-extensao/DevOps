@@ -111,3 +111,21 @@ variable "nacl_web_cidr" {
   description = "CIDR para entrada personalizada na web"
   default     = "10.0.0.0/24"
 }
+
+variable "ami_id" {
+  type        = string
+  description = "Id da AMI utilizada nas instâncias"
+  default     = "ami-0ec10929233384c7f"
+}
+
+variable "key_name" {
+  type        = string
+  description = "Nome da chave PEM das instâncias"
+  default     = "chave"
+}
+
+variable "instance_type" {
+  type        = string
+  description = "Tipo de instância"
+  default     = "t3.micro"
+}

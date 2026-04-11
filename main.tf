@@ -1,31 +1,3 @@
-locals {
-  app_subnets = {
-    app_1 = {
-      cidr = var.app_subnet_1_cidr
-      az   = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
-      name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
-    }
-    app_2 = {
-      cidr = var.app_subnet_2_cidr
-      az   = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-      name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-    }
-  }
-
-  web_subnets = {
-    web_1 = {
-      cidr = var.web_subnet_1_cidr
-      az   = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
-      name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
-    }
-    web_2 = {
-      cidr = var.web_subnet_2_cidr
-      az   = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-      name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-    }
-  }
-}
-
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 
@@ -42,7 +14,7 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-resource "aws_subnet" "subnet_public" {
+resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
   availability_zone       = "${var.aws_region}${var.public_subnet_availability_zone}"
@@ -65,7 +37,7 @@ resource "aws_eip" "nat" {
 
 resource "aws_nat_gateway" "ngw" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.subnet_public.id
+  subnet_id     = aws_subnet.public.id
 
   depends_on = [aws_internet_gateway.igw]
 
@@ -101,7 +73,7 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.subnet_public.id
+  subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
 
@@ -252,7 +224,7 @@ resource "aws_security_group" "bastion" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = "0.0.0.0/0"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -297,6 +269,36 @@ resource "aws_security_group" "web" {
   }
 }
 
+resource "aws_security_group" "lb" {
+  name   = "lb-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/24"]
+  }
+
+  tags = {
+    Name = "web-sg"
+  }
+}
+
 resource "aws_security_group" "app" {
   name   = "app-sg"
   vpc_id = aws_vpc.main.id
@@ -316,10 +318,9 @@ resource "aws_security_group" "app" {
   }
 
   egress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.db.id]
+    from_port = 3306
+    to_port   = 3306
+    protocol  = "tcp"
   }
 
   tags = {
@@ -354,5 +355,27 @@ resource "aws_security_group" "db" {
 
   tags = {
     Name = "db-sg"
+  }
+}
+
+resource "aws_instance" "instances" {
+  for_each = local.instances
+
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = each.value.subnet_id
+  vpc_security_group_ids      = each.value.sg_ids
+  key_name                    = var.key_name
+  associate_public_ip_address = each.value.public_ip
+
+  root_block_device {
+    volume_size           = each.value.volume_size
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  tags = {
+    Name = each.value.name
   }
 }
