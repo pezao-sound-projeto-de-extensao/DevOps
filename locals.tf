@@ -24,22 +24,26 @@ locals {
       name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
     }
   }
+  public_subnets = {
+    public-1 = {
+      cidr = var.public_subnet_1_cidr
+      az   = "${var.aws_region}${var.public_subnet_1_availability_zone}"
+      name = "${var.public_subnet_name}-${var.vpc_name}-${var.aws_region}${var.public_subnet_1_availability_zone}"
+    }
+    public-2 = {
+      cidr = var.public_subnet_2_cidr
+      az   = "${var.aws_region}${var.public_subnet_2_availability_zone}"
+      name = "${var.public_subnet_name}-${var.vpc_name}-${var.aws_region}${var.public_subnet_2_availability_zone}"
+    }
+  }
 
   instances = {
     bastion = {
       name        = "bastion"
-      subnet_id   = aws_subnet.public.id
+      subnet_id   = aws_subnet.public["public-1"].id
       public_ip   = true
       sg_ids      = [aws_security_group.bastion.id]
       volume_size = 10
-    }
-
-    lb = {
-      name        = "lb"
-      subnet_id   = aws_subnet.public.id
-      public_ip   = true
-      sg_ids      = [aws_security_group.lb.id]
-      volume_size = 12
     }
 
     web-1 = {

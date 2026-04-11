@@ -16,10 +16,10 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/22"
 }
 
-variable "public_subnet_cidr" {
+variable "public_subnet_1_cidr" {
   type        = string
-  description = "CIDR da subrede pública"
-  default     = "10.0.0.0/24"
+  description = "CIDR da subrede pública 1"
+  default     = "10.0.0.0/25"
 }
 
 variable "public_subnet_name" {
@@ -28,10 +28,22 @@ variable "public_subnet_name" {
   default     = "public_subnet"
 }
 
-variable "public_subnet_availability_zone" {
+variable "public_subnet_1_availability_zone" {
   type        = string
-  description = "AZ da subrede pública"
+  description = "AZ da subrede pública 1"
   default     = "a"
+}
+
+variable "public_subnet_2_cidr" {
+  type        = string
+  description = "CIDR da subrede pública 2"
+  default     = "10.0.0.128/25"
+}
+
+variable "public_subnet_2_availability_zone" {
+  type        = string
+  description = "AZ da subrede pública 2"
+  default     = "b"
 }
 
 variable "app_subnet_name" {
@@ -131,13 +143,13 @@ variable "instance_type" {
 }
 
 variable "efs_token" {
-  type = string
+  type        = string
   description = "Token de criação do EFS"
-  default = "token"
+  default     = "token"
 }
 
 variable "ebs_availability_zone" {
-  type = string
+  type        = string
   description = "AZ do EBS"
-  default = "a"
+  default     = "a"
 }
