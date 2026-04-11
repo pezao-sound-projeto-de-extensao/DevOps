@@ -142,7 +142,7 @@ resource "aws_subnet" "web" {
   }
 }
 
-resource "aws_network_acl" "nacl_db" {
+resource "aws_network_acl" "db" {
   vpc_id = aws_vpc.main.id
 
   subnet_ids = [aws_subnet.db.id]
@@ -166,11 +166,11 @@ resource "aws_network_acl" "nacl_db" {
   }
 
   tags = {
-    Name = "nacl-db"
+    Name = "db-nacl"
   }
 }
 
-resource "aws_network_acl" "nacl_app" {
+resource "aws_network_acl" "app" {
   vpc_id = aws_vpc.main.id
 
   subnet_ids = [for subnet in values(aws_subnet.app) : subnet.id]
@@ -203,11 +203,11 @@ resource "aws_network_acl" "nacl_app" {
   }
 
   tags = {
-    Name = "nacl-app"
+    Name = "app-nacl"
   }
 }
 
-resource "aws_network_acl" "nacl_web" {
+resource "aws_network_acl" "web" {
   vpc_id = aws_vpc.main.id
 
   subnet_ids = [for subnet in values(aws_subnet.web) : subnet.id]
@@ -240,6 +240,119 @@ resource "aws_network_acl" "nacl_web" {
   }
 
   tags = {
-    Name = "nacl-web"
+    Name = "nweb-nacl"
+  }
+}
+
+resource "aws_security_group" "bastion" {
+  name   = "bastion-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = "0.0.0.0/0"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "bastion-sg"
+  }
+}
+
+resource "aws_security_group" "web" {
+  name   = "web-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [var.nacl_web_cidr]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  egress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  tags = {
+    Name = "web-sg"
+  }
+}
+
+resource "aws_security_group" "app" {
+  name   = "app-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port = 80
+    to_port   = 80
+    protocol  = "tcp"
+    //security_groups = [aws_security_group.web.id]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  egress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.db.id]
+  }
+
+  tags = {
+    Name = "app-sg"
+  }
+}
+
+resource "aws_security_group" "db" {
+  name   = "db-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "db-sg"
   }
 }
