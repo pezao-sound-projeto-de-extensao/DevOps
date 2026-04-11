@@ -17,3 +17,5 @@ terraform.rc
 terraform.tfvars
 *.auto.tfvars
 *.tfvars.json
+
+.terraform.lock.hcl

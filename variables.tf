@@ -1,14 +1,67 @@
 variable "aws_region" {
-  type = string
+  type        = string
   description = "Região da AWS"
+  default     = "us-east-1"
 }
 
 variable "vpc_name" {
-  type = string
+  type        = string
   description = "Nome da VPC"
+  default     = "PezaoSound-vpc"
 }
 
 variable "vpc_cidr" {
-  type = string
+  type        = string
   description = "CIDR da VPC"
+  default     = "10.0.0.0/25"
 }
+
+variable "public_subnet_cidr" {
+  type        = string
+  description = "CIDR da subrede pública"
+  default     = "10.0.0.0/27"
+}
+
+variable "public_subnet_name" {
+  type        = string
+  description = "Nome da subrede pública"
+  default     = "public_subnet_pezaosound"
+}
+
+variable "public_subnet_availability_zone" {
+  type        = string
+  description = "AZ da subrede pública"
+  default     = "a"
+}
+
+variable "app_subnet_name" {
+  type        = string
+  description = "Nome da subrede de aplicação"
+  default     = "app_subnet_pezaosound"
+}
+
+variable "app_subnet_1_cidr" {
+  type        = string
+  description = "CIDR da subrede 1 de aplicação"
+  default     = "10.0.0.32/27"
+}
+
+variable "app_subnet_2_cidr" {
+  type        = string
+  description = "CIDR da subrede 2 de aplicação"
+  default     = "10.0.0.64/27"
+}
+
+variable "app_subnet_1_availability_zone" {
+  type        = string
+  description = "AZ da subrede 1 de aplicação"
+  default     = "a"
+}
+
+variable "app_subnet_2_availability_zone" {
+  type        = string
+  description = "AZ da subrede 2 de aplicação"
+  default     = "b"
+}
+
+
