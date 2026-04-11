@@ -1,3 +1,31 @@
+locals {
+  app_subnets = {
+    app_1 = {
+      cidr = var.app_subnet_1_cidr
+      az   = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+      name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+    }
+    app_2 = {
+      cidr = var.app_subnet_2_cidr
+      az   = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+      name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+    }
+  }
+
+  web_subnets = {
+    web_1 = {
+      cidr = var.web_subnet_1_cidr
+      az   = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+      name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+    }
+    web_2 = {
+      cidr = var.web_subnet_2_cidr
+      az   = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+      name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
+    }
+  }
+}
+
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 
@@ -39,11 +67,11 @@ resource "aws_nat_gateway" "ngw" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.subnet_public.id
 
+  depends_on = [aws_internet_gateway.igw]
+
   tags = {
     Name = "ngw"
   }
-
-  depends_on = [aws_internet_gateway.igw]
 }
 
 resource "aws_default_route_table" "main_table" {
@@ -77,32 +105,20 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_subnet" "subnet_app_1" {
+resource "aws_subnet" "app" {
+  for_each = local.app_subnets
+
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.app_subnet_1_cidr
-  availability_zone       = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+    Name = each.value.name
   }
-
 }
 
-resource "aws_subnet" "subnet_app_2" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.app_subnet_2_cidr
-  availability_zone       = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name = "${var.app_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-
-  }
-
-}
-
-resource "aws_subnet" "subnet_db" {
+resource "aws_subnet" "db" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.db_subnet_cidr
   availability_zone       = "${var.aws_region}${var.db_subnet_availability_zone}"
@@ -111,39 +127,25 @@ resource "aws_subnet" "subnet_db" {
   tags = {
     Name = "${var.db_subnet_name}-${var.vpc_name}-${var.aws_region}${var.db_subnet_availability_zone}"
   }
-
 }
 
-resource "aws_subnet" "subnet_web_1" {
+resource "aws_subnet" "web" {
+  for_each = local.web_subnets
+
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.web_subnet_1_cidr
-  availability_zone       = "${var.aws_region}${var.app_web_subnet_1_availability_zone}"
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_1_availability_zone}"
-
+    Name = each.value.name
   }
-
-}
-
-resource "aws_subnet" "subnet_web_2" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.web_subnet_2_cidr
-  availability_zone       = "${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name = "${var.web_subnet_name}-${var.vpc_name}-${var.aws_region}${var.app_web_subnet_2_availability_zone}"
-
-  }
-
 }
 
 resource "aws_network_acl" "nacl_db" {
   vpc_id = aws_vpc.main.id
 
-  subnet_ids = [aws_subnet.subnet_db.id]
+  subnet_ids = [aws_subnet.db.id]
 
   ingress {
     rule_no    = 100
@@ -166,13 +168,12 @@ resource "aws_network_acl" "nacl_db" {
   tags = {
     Name = "nacl-db"
   }
-
 }
 
 resource "aws_network_acl" "nacl_app" {
   vpc_id = aws_vpc.main.id
 
-  subnet_ids = [aws_subnet.subnet_app_1.id, aws_subnet.subnet_app_2.id]
+  subnet_ids = [for subnet in values(aws_subnet.app) : subnet.id]
 
   ingress {
     rule_no    = 100
@@ -204,13 +205,12 @@ resource "aws_network_acl" "nacl_app" {
   tags = {
     Name = "nacl-app"
   }
-
 }
 
 resource "aws_network_acl" "nacl_web" {
   vpc_id = aws_vpc.main.id
 
-  subnet_ids = [aws_subnet.subnet_web_1.id, aws_subnet.subnet_web_2.id]
+  subnet_ids = [for subnet in values(aws_subnet.web) : subnet.id]
 
   ingress {
     rule_no    = 100
@@ -242,5 +242,4 @@ resource "aws_network_acl" "nacl_web" {
   tags = {
     Name = "nacl-web"
   }
-
 }
