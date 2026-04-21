@@ -44,6 +44,7 @@ locals {
       public_ip   = true
       sg_ids      = [aws_security_group.bastion.id]
       volume_size = 10
+      user_data   = "echo"
     }
 
     web-1 = {
@@ -52,7 +53,9 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.web.id]
       volume_size = 15
-    }
+      user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
+        html_content = file("${path.module}/scripts/index1a.html")
+    }) }
 
     web-2 = {
       name        = "web-2"
@@ -60,7 +63,9 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.web.id]
       volume_size = 15
-    }
+      user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
+        html_content = file("${path.module}/scripts/index1b.html")
+    }) }
 
     app-1 = {
       name        = "app-1"
@@ -68,6 +73,7 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
+      user_data   = "echo"
     }
 
     app-2 = {
@@ -76,6 +82,8 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
+      user_data   = "echo"
+
     }
 
     db = {
@@ -84,6 +92,8 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.db.id]
       volume_size = 20
+      user_data   = "echo"
+
     }
   }
   s3s = {
