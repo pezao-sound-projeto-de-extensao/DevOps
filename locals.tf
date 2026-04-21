@@ -92,8 +92,9 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.db.id]
       volume_size = 20
-      user_data   = "echo"
-
+      user_data = templatefile("${path.module}/scripts/configDb.sh.tpl", {
+        initdb_sql = file("${path.module}/scripts/db.sql")
+      })
     }
   }
   s3s = {
