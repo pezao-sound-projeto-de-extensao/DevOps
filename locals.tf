@@ -73,7 +73,15 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
-      user_data   = "echo"
+      user_data = templatefile("${path.module}/scripts/configApp.sh.tpl", {
+        docker_image   = "herculessp/pezao-sound-api:main"
+        container_name = "app"
+        db_private_ip  = aws_instance.instance_db.private_ip
+        db_name        = "stockflow"
+        db_username    = "stockflow"
+        db_password    = "StockFlow@2026"
+        db_port        = "3306"
+      })
     }
 
     app-2 = {
@@ -82,20 +90,29 @@ locals {
       public_ip   = false
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
-      user_data   = "echo"
-
-    }
-
-    db = {
-      name        = "db"
-      subnet_id   = aws_subnet.db.id
-      public_ip   = false
-      sg_ids      = [aws_security_group.db.id]
-      volume_size = 20
-      user_data = templatefile("${path.module}/scripts/configDb.sh.tpl", {
-        initdb_sql = file("${path.module}/scripts/db.sql")
+      user_data = templatefile("${path.module}/scripts/configApp.sh.tpl", {
+        docker_image   = "herculessp/pezao-sound-api:main"
+        container_name = "app"
+        db_private_ip  = aws_instance.instance_db.private_ip
+        db_name        = "stockflow"
+        db_username    = "stockflow"
+        db_password    = "StockFlow@2026"
+        db_port        = "3306"
       })
     }
+  }
+  db = {
+    name        = "db"
+    subnet_id   = aws_subnet.db.id
+    public_ip   = false
+    sg_ids      = [aws_security_group.db.id]
+    volume_size = 20
+    user_data = templatefile("${path.module}/scripts/configDb.sh.tpl", {
+      db_name     = "stockflow"
+      db_username = "stockflow"
+      db_password = "StockFlow@2026"
+      initdb_sql  = file("${path.module}/scripts/bd.sql")
+    })
   }
   s3s = {
     raw = {

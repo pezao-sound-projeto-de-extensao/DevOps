@@ -187,6 +187,15 @@ resource "aws_network_acl" "app" {
   }
 
   egress {
+    rule_no    = 105
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+
+  egress {
     rule_no    = 120
     protocol   = "tcp"
     action     = "allow"
@@ -238,6 +247,15 @@ resource "aws_network_acl" "web" {
     cidr_block = "0.0.0.0/0"
     from_port  = 80
     to_port    = 80
+  }
+
+  egress {
+    rule_no    = 105
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
   }
 
   egress {
@@ -295,7 +313,25 @@ resource "aws_network_acl" "db" {
   }
 
   egress {
+    rule_no    = 105
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+
+  egress {
     rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
+  }
+
+  egress {
+    rule_no    = 120
     protocol   = "tcp"
     action     = "allow"
     cidr_block = "0.0.0.0/0"
@@ -441,6 +477,27 @@ resource "aws_security_group" "db" {
 
   tags = {
     Name = "db-sg"
+  }
+}
+
+resource "aws_instance" "instance_db" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = local.db.subnet_id
+  vpc_security_group_ids      = local.db.sg_ids
+  key_name                    = var.key_name
+  associate_public_ip_address = local.db.public_ip
+  user_data                   = local.db.user_data
+
+  root_block_device {
+    volume_size           = local.db.volume_size
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  tags = {
+    Name = local.db.name
   }
 }
 
