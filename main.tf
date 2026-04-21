@@ -547,7 +547,7 @@ resource "aws_lb_target_group" "web" {
   target_type = "instance"
 
   health_check {
-    path     = "/api/health"
+    path     = "/"
     port     = "traffic-port"
     protocol = "HTTP"
     matcher  = "200"
@@ -562,7 +562,7 @@ resource "aws_lb_target_group" "app" {
   target_type = "instance"
 
   health_check {
-    path     = "/"
+    path     = "/api/health"
     port     = "traffic-port"
     protocol = "HTTP"
     matcher  = "200"

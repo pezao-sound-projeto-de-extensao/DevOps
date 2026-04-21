@@ -153,3 +153,27 @@ variable "ebs_availability_zone" {
   description = "AZ do EBS"
   default     = "a"
 }
+
+variable "app_docker_image" {
+  type        = string
+  description = "URL da imagem da aplicação"
+  default     = "herculessp/pezao-sound-api:main"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Usuário do banco de dados"
+  default     = "stockflow"
+}
+
+variable "db_name" {
+  type        = string
+  description = "Nome do banco de dados"
+  default     = "stockflow"
+}
+
+variable "db_password" {
+  type        = string
+  description = "Senha do usuário do banco de dados"
+  default     = "StockFlow@2026"
+}

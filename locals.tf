@@ -74,12 +74,12 @@ locals {
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
       user_data = templatefile("${path.module}/scripts/configApp.sh.tpl", {
-        docker_image   = "herculessp/pezao-sound-api:main"
+        docker_image   = var.app_docker_image
         container_name = "app"
         db_private_ip  = aws_instance.instance_db.private_ip
-        db_name        = "stockflow"
-        db_username    = "stockflow"
-        db_password    = "StockFlow@2026"
+        db_name        = var.db_name
+        db_username    = var.db_username
+        db_password    = var.db_password
         db_port        = "3306"
       })
     }
@@ -91,12 +91,12 @@ locals {
       sg_ids      = [aws_security_group.app.id]
       volume_size = 15
       user_data = templatefile("${path.module}/scripts/configApp.sh.tpl", {
-        docker_image   = "herculessp/pezao-sound-api:main"
+        docker_image   = var.app_docker_image
         container_name = "app"
         db_private_ip  = aws_instance.instance_db.private_ip
-        db_name        = "stockflow"
-        db_username    = "stockflow"
-        db_password    = "StockFlow@2026"
+        db_name        = var.db_name
+        db_username    = var.db_username
+        db_password    = var.db_password
         db_port        = "3306"
       })
     }
@@ -108,9 +108,9 @@ locals {
     sg_ids      = [aws_security_group.db.id]
     volume_size = 20
     user_data = templatefile("${path.module}/scripts/configDb.sh.tpl", {
-      db_name     = "stockflow"
-      db_username = "stockflow"
-      db_password = "StockFlow@2026"
+      db_name     = var.db_name
+      db_username = var.db_username
+      db_password = var.db_password
       initdb_sql  = file("${path.module}/scripts/bd.sql")
     })
   }
