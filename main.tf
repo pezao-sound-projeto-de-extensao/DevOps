@@ -1,5 +1,7 @@
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
+  enable_dns_support   = true
+  enable_dns_hostnames  = true
 
   tags = {
     Name = var.vpc_name
@@ -169,6 +171,15 @@ resource "aws_network_acl" "app" {
   }
 
   ingress {
+    rule_no    = 115
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 2049
+    to_port    = 2049
+  }
+
+  ingress {
     rule_no    = 120
     protocol   = "tcp"
     action     = "allow"
@@ -193,6 +204,15 @@ resource "aws_network_acl" "app" {
     cidr_block = "0.0.0.0/0"
     from_port  = 443
     to_port    = 443
+  }
+
+  egress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 2049
+    to_port    = 2049
   }
 
   egress {
@@ -256,6 +276,15 @@ resource "aws_network_acl" "web" {
     cidr_block = "0.0.0.0/0"
     from_port  = 443
     to_port    = 443
+  }
+
+  egress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 2049
+    to_port    = 2049
   }
 
   egress {
@@ -450,6 +479,29 @@ resource "aws_security_group" "app" {
   }
 }
 
+resource "aws_security_group" "efs" {
+  name   = "efs-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 2049
+    to_port         = 2049
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id, aws_security_group.web.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "efs-sg"
+  }
+}
+
 resource "aws_security_group" "db" {
   name   = "db-sg"
   vpc_id = aws_vpc.main.id
@@ -480,6 +532,17 @@ resource "aws_security_group" "db" {
   }
 }
 
+data "aws_iam_instance_profile" "lab" {
+  name = "LabInstanceProfile"
+}
+
+resource "aws_s3_object" "db_sql" {
+  bucket = aws_s3_bucket.s3["raw"].bucket
+  key    = "bd.sql"
+  source = "${path.module}/scripts/bd.sql"
+  etag   = filemd5("${path.module}/scripts/bd.sql")
+}
+
 resource "aws_instance" "instance_db" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -487,7 +550,11 @@ resource "aws_instance" "instance_db" {
   vpc_security_group_ids      = local.db.sg_ids
   key_name                    = var.key_name
   associate_public_ip_address = local.db.public_ip
+  iam_instance_profile        = data.aws_iam_instance_profile.lab.name
   user_data                   = local.db.user_data
+  user_data_replace_on_change = true
+
+  depends_on = [aws_s3_object.db_sql]
 
   root_block_device {
     volume_size           = local.db.volume_size
@@ -511,6 +578,7 @@ resource "aws_instance" "instances" {
   key_name                    = var.key_name
   associate_public_ip_address = each.value.public_ip
   user_data                   = each.value.user_data
+  user_data_replace_on_change = true
 
   root_block_device {
     volume_size           = each.value.volume_size
@@ -550,7 +618,7 @@ resource "aws_lb_target_group" "web" {
     path     = "/"
     port     = "traffic-port"
     protocol = "HTTP"
-    matcher  = "200"
+    matcher  = "200-399"
   }
 }
 
@@ -565,7 +633,7 @@ resource "aws_lb_target_group" "app" {
     path     = "/api/health"
     port     = "traffic-port"
     protocol = "HTTP"
-    matcher  = "200"
+    matcher  = "200-399"
   }
 }
 
@@ -640,6 +708,18 @@ resource "aws_efs_file_system" "efs" {
   tags = {
     Name = "EFS"
   }
+}
+
+resource "aws_efs_mount_target" "efs_a" {
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = aws_subnet.app["app-1"].id
+  security_groups = [aws_security_group.efs.id]
+}
+
+resource "aws_efs_mount_target" "efs_b" {
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = aws_subnet.app["app-2"].id
+  security_groups = [aws_security_group.efs.id]
 }
 
 resource "aws_ebs_volume" "ebs" {

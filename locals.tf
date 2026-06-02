@@ -44,7 +44,10 @@ locals {
       public_ip   = true
       sg_ids      = [aws_security_group.bastion.id]
       volume_size = 10
-      user_data   = "echo"
+      user_data   = <<-EOT
+        #!/bin/bash
+        echo "bastion-ready" > /tmp/bastion-ready
+      EOT
     }
 
     web-1 = {
@@ -54,6 +57,7 @@ locals {
       sg_ids      = [aws_security_group.web.id]
       volume_size = 15
       user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
+        efs_dns      = aws_efs_file_system.efs.dns_name
         html_content = file("${path.module}/scripts/index1a.html")
     }) }
 
@@ -64,6 +68,7 @@ locals {
       sg_ids      = [aws_security_group.web.id]
       volume_size = 15
       user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
+        efs_dns      = aws_efs_file_system.efs.dns_name
         html_content = file("${path.module}/scripts/index1b.html")
     }) }
 
@@ -81,6 +86,7 @@ locals {
         db_username    = var.db_username
         db_password    = var.db_password
         db_port        = "3306"
+        efs_dns        = aws_efs_file_system.efs.dns_name
       })
     }
 
@@ -98,6 +104,7 @@ locals {
         db_username    = var.db_username
         db_password    = var.db_password
         db_port        = "3306"
+        efs_dns        = aws_efs_file_system.efs.dns_name
       })
     }
   }
@@ -111,7 +118,8 @@ locals {
       db_name     = var.db_name
       db_username = var.db_username
       db_password = var.db_password
-      initdb_sql  = file("${path.module}/scripts/bd.sql")
+      sql_bucket  = aws_s3_bucket.s3["raw"].bucket
+      sql_key     = "bd.sql"
     })
   }
   s3s = {

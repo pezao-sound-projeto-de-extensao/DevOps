@@ -25,6 +25,8 @@ until systemctl is-active --quiet mysql; do
   sleep 2
 done
 
+sudo apt-get install -y awscli
+
 sudo cat > /tmp/bootstrap.sql <<EOF
 CREATE DATABASE IF NOT EXISTS \`${db_name}\`;
 CREATE USER IF NOT EXISTS '${db_username}'@'%' IDENTIFIED BY '${db_password}';
@@ -32,9 +34,7 @@ GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_username}'@'%';
 FLUSH PRIVILEGES;
 EOF
 
-sudo cat > /tmp/schema.sql <<'EOF'
-${initdb_sql}
-EOF
+aws s3 cp s3://${sql_bucket}/${sql_key} /tmp/schema.sql
 
 sudo mysql < /tmp/bootstrap.sql
 sudo mysql "${db_name}" < /tmp/schema.sql
