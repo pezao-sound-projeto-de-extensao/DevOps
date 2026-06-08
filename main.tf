@@ -650,3 +650,90 @@ resource "aws_ebs_volume" "ebs" {
     Name = "EBS"
   }
 }
+
+resource "aws_cloudwatch_dashboard" "main" {
+  dashboard_name = "pezaosound-dashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Target Group app - HTTP 5XX"
+          view    = "timeSeries"
+          stacked = false
+          region  = data.aws_region.current.region
+          stat    = "Sum"
+          period  = 60
+          metrics = [
+            [
+              "AWS/ApplicationELB",
+              "HTTPCode_Target_5XX_Count",
+              "TargetGroup",
+              aws_lb_target_group.app.arn_suffix,
+              "LoadBalancer",
+              aws_lb.main.arn_suffix
+            ]
+          ]
+        }
+      },
+            {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Target Group web - Healthy Hosts"
+          view    = "timeSeries"
+          stacked = false
+          region  = data.aws_region.current.region
+          stat    = "Minimum"
+          period  = 60
+          metrics = [
+            [
+              "AWS/ApplicationELB",
+              "HealthyHostCount",
+              "TargetGroup",
+              aws_lb_target_group.web.arn_suffix,
+              "LoadBalancer",
+              aws_lb.main.arn_suffix
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Target Group app - Healthy Hosts"
+          view    = "timeSeries"
+          stacked = false
+          region  = data.aws_region.current.region
+          stat    = "Minimum"
+          period  = 60
+          metrics = [
+            [
+              "AWS/ApplicationELB",
+              "HealthyHostCount",
+              "TargetGroup",
+              aws_lb_target_group.app.arn_suffix,
+              "LoadBalancer",
+              aws_lb.main.arn_suffix
+            ]
+          ]
+        }
+      }
+    ]
+  })
+}
