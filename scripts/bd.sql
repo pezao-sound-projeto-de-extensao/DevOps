@@ -1,8 +1,10 @@
--- MySQL dump 10.13  Distrib 8.0.44, for Linux (x86_64)
+CREATE DATABASE  IF NOT EXISTS `stockflow` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `stockflow`;
+-- MySQL dump 10.13  Distrib 8.4.8, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: stockflow
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.0.37
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -25,7 +27,7 @@ DROP TABLE IF EXISTS `alertas`;
 CREATE TABLE `alertas` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID do alerta',
   `item_id` int NOT NULL COMMENT 'FK para itens',
-  `tipo` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'estoque_baixo ou zerado',
+  `tipo` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'estoque_baixo ou zerado',
   `visualizado` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Se já foi visto no dashboard',
   `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Quando o alerta foi gerado',
   PRIMARY KEY (`id`),
@@ -80,8 +82,8 @@ DROP TABLE IF EXISTS `cargos`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `cargos` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID do cargo',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Denominação do cargo — ex: Administrador, Operador',
-  `descricao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Descrição do cargo',
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Denominação do cargo — ex: Administrador, Operador',
+  `descricao` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Descrição do cargo',
   `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cargos dos usuários do sistema';
@@ -106,10 +108,10 @@ DROP TABLE IF EXISTS `categorias`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `categorias` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID da categoria',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome da categoria',
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome da categoria',
   `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Categorias de produto — ex: Som automotivo, Baterias';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Categorias de produto — ex: Som automotivo, Baterias';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -118,7 +120,39 @@ CREATE TABLE `categorias` (
 
 LOCK TABLES `categorias` WRITE;
 /*!40000 ALTER TABLE `categorias` DISABLE KEYS */;
+INSERT INTO `categorias` VALUES (1,'Som Automotivo','2026-06-08 00:17:33'),(2,'Baterias','2026-06-08 00:17:33'),(3,'Cabos e Conectores','2026-06-08 00:17:33'),(4,'Iluminação','2026-06-08 00:17:33');
 /*!40000 ALTER TABLE `categorias` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagem_produto`
+--
+
+DROP TABLE IF EXISTS `imagem_produto`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `imagem_produto` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID da imagem do produto',
+  `item_id` int NOT NULL COMMENT 'FK para itens',
+  `nome_arquivo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome original do arquivo enviado',
+  `caminho` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Chave/caminho relativo do arquivo no storage',
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tipo MIME do arquivo',
+  `tamanho_bytes` int DEFAULT NULL COMMENT 'Tamanho do arquivo em bytes',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data do upload',
+  PRIMARY KEY (`id`),
+  KEY `fk_imagem_produto_item` (`item_id`),
+  CONSTRAINT `fk_imagem_produto_item` FOREIGN KEY (`item_id`) REFERENCES `itens` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Imagens vinculadas aos itens';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagem_produto`
+--
+
+LOCK TABLES `imagem_produto` WRITE;
+/*!40000 ALTER TABLE `imagem_produto` DISABLE KEYS */;
+INSERT INTO `imagem_produto` VALUES (1,1,'amplificador-frente.jpg','imagens-produto/exemplo-amplificador-frente.jpg','image/jpeg',102400,'2026-06-08 00:17:33'),(2,1,'amplificador-traseira.jpg','imagens-produto/exemplo-amplificador-traseira.jpg','image/jpeg',98304,'2026-06-08 00:17:33'),(3,5,'cabo-rca.png','imagens-produto/exemplo-cabo-rca.png','image/png',51200,'2026-06-08 00:17:33');
+/*!40000 ALTER TABLE `imagem_produto` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -132,7 +166,7 @@ CREATE TABLE `itens` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID do item',
   `categoria_id` int NOT NULL COMMENT 'FK para categorias',
   `unidade_id` int NOT NULL COMMENT 'FK para unidades',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome do item',
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome do item',
   `quantidade_atual` int NOT NULL DEFAULT '0' COMMENT 'Estoque atual',
   `quantidade_minima` int NOT NULL DEFAULT '0' COMMENT 'Abaixo disso gera alerta',
   `preco_custo` double DEFAULT NULL,
@@ -145,7 +179,7 @@ CREATE TABLE `itens` (
   KEY `fk_itens_unidade` (`unidade_id`),
   CONSTRAINT `fk_itens_categoria` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`),
   CONSTRAINT `fk_itens_unidade` FOREIGN KEY (`unidade_id`) REFERENCES `unidades` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Itens do estoque do Pezão Sound';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Itens do estoque do Pezão Sound';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -154,6 +188,7 @@ CREATE TABLE `itens` (
 
 LOCK TABLES `itens` WRITE;
 /*!40000 ALTER TABLE `itens` DISABLE KEYS */;
+INSERT INTO `itens` VALUES (1,1,1,'Módulo Amplificador 400W',8,3,180,320,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(2,1,2,'Alto-falante 6x9 200W',4,2,95,170,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(3,1,1,'Subwoofer 12\" 600W',2,2,230,420,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(4,2,1,'Bateria 60Ah',1,3,310,520,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(5,3,3,'Cabo RCA 5m',15,5,12,25,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(6,4,1,'Strobo LED RGB',0,2,45,89,1,'2026-06-08 00:17:33','2026-06-08 00:17:33'),(7,1,1,'Tweeters Triaxial 120W',6,2,55,95,0,'2026-06-08 00:17:33','2026-06-08 00:17:33');
 /*!40000 ALTER TABLE `itens` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -190,12 +225,12 @@ CREATE TABLE `movimentacoes` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID da movimentação',
   `item_id` int NOT NULL COMMENT 'FK para itens',
   `usuario_id` int NOT NULL COMMENT 'FK para usuários — quem registrou',
-  `tipo` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'entrada ou saida',
+  `tipo` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'entrada ou saida',
   `quantidade` int NOT NULL COMMENT 'Quantidade movimentada',
   `estoque_antes` int NOT NULL COMMENT 'Estoque antes da movimentação',
   `estoque_depois` int NOT NULL COMMENT 'Estoque após a movimentação',
   `data` date NOT NULL COMMENT 'Data da movimentação',
-  `observacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Anotação opcional — ex: NF, fornecedor',
+  `observacao` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Anotação opcional — ex: NF, fornecedor',
   `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data do registro',
   PRIMARY KEY (`id`),
   KEY `fk_movimentacoes_item` (`item_id`),
@@ -203,7 +238,7 @@ CREATE TABLE `movimentacoes` (
   CONSTRAINT `fk_movimentacoes_item` FOREIGN KEY (`item_id`) REFERENCES `itens` (`id`),
   CONSTRAINT `fk_movimentacoes_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
   CONSTRAINT `chk_movimentacoes_tipo` CHECK ((`tipo` in (_utf8mb4'entrada',_utf8mb4'saida')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Histórico de todas as entradas e saídas';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Histórico de todas as entradas e saídas';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -212,7 +247,41 @@ CREATE TABLE `movimentacoes` (
 
 LOCK TABLES `movimentacoes` WRITE;
 /*!40000 ALTER TABLE `movimentacoes` DISABLE KEYS */;
+INSERT INTO `movimentacoes` VALUES (1,1,1,'entrada',5,3,8,'2026-04-15','Compra fornecedor — NF 1042','2026-06-08 00:17:33');
 /*!40000 ALTER TABLE `movimentacoes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `nota_entrada`
+--
+
+DROP TABLE IF EXISTS `nota_entrada`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `nota_entrada` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID do arquivo da nota',
+  `movimentacao_id` int NOT NULL COMMENT 'FK para movimentacoes',
+  `tipo` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'imagem ou nota_fiscal',
+  `nome_arquivo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome original do arquivo enviado',
+  `caminho` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Chave/caminho relativo do arquivo no storage',
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Tipo MIME do arquivo',
+  `tamanho_bytes` int DEFAULT NULL COMMENT 'Tamanho do arquivo em bytes',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data do upload',
+  PRIMARY KEY (`id`),
+  KEY `fk_nota_entrada_movimentacao` (`movimentacao_id`),
+  CONSTRAINT `fk_nota_entrada_movimentacao` FOREIGN KEY (`movimentacao_id`) REFERENCES `movimentacoes` (`id`),
+  CONSTRAINT `chk_nota_entrada_tipo` CHECK ((`tipo` in (_utf8mb4'imagem',_utf8mb4'nota_fiscal')))
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Arquivos vinculados a movimentação — nota fiscal/imagem';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `nota_entrada`
+--
+
+LOCK TABLES `nota_entrada` WRITE;
+/*!40000 ALTER TABLE `nota_entrada` DISABLE KEYS */;
+INSERT INTO `nota_entrada` VALUES (1,1,'nota_fiscal','nf-1042.pdf','notas-entrada/exemplo-nf-1042.pdf','application/pdf',204800,'2026-06-08 00:17:33'),(2,1,'imagem','recibo.jpg','notas-entrada/exemplo-recibo.jpg','image/jpeg',81920,'2026-06-08 00:17:33');
+/*!40000 ALTER TABLE `nota_entrada` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -224,8 +293,8 @@ DROP TABLE IF EXISTS `permissoes`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `permissoes` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID da permissão',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Identificador da permissão — ex: cadastrar_produto',
-  `descricao` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'O que essa permissão permite fazer',
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Identificador da permissão — ex: cadastrar_produto',
+  `descricao` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'O que essa permissão permite fazer',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Permissões disponíveis no sistema';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -249,10 +318,10 @@ DROP TABLE IF EXISTS `unidades`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `unidades` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID da unidade',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome completo — ex: Unidade',
-  `abreviacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome completo — ex: Unidade',
+  `abreviacao` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Unidades de medida dos produtos';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Unidades de medida dos produtos';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -261,6 +330,7 @@ CREATE TABLE `unidades` (
 
 LOCK TABLES `unidades` WRITE;
 /*!40000 ALTER TABLE `unidades` DISABLE KEYS */;
+INSERT INTO `unidades` VALUES (1,'Unidade','UN'),(2,'Par','PR'),(3,'Metro','M');
 /*!40000 ALTER TABLE `unidades` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -274,9 +344,9 @@ DROP TABLE IF EXISTS `usuarios`;
 CREATE TABLE `usuarios` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID do usuário',
   `cargo_id` int NOT NULL COMMENT 'FK para cargo',
-  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome completo',
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Email de login',
-  `senha_hash` varchar(2000) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Senha criptografada',
+  `nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome completo',
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Email de login',
+  `senha_hash` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Senha criptografada',
   `ativo` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Usuário ativo ou inativo',
   `ultimo_acesso` datetime DEFAULT NULL COMMENT 'Último login registrado',
   `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de cadastro',
@@ -297,29 +367,6 @@ INSERT INTO `usuarios` VALUES (1,1,'ADM','adm@email.com','$2a$10$FsYqdmjvhmmXTSh
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
--- Unidades
-INSERT INTO unidades (nome, abreviacao) VALUES
-                                            ('Unidade', 'UN'),
-                                            ('Par', 'PR'),
-                                            ('Metro', 'M');
-
--- Categorias
-INSERT INTO categorias (nome) VALUES
-                                  ('Som Automotivo'),
-                                  ('Baterias'),
-                                  ('Cabos e Conectores'),
-                                  ('Iluminação');
-
--- Itens
-INSERT INTO itens (categoria_id, unidade_id, nome, quantidade_atual, quantidade_minima, preco_custo, preco_venda, ativo) VALUES
-                                                                                                                             (1, 1, 'Módulo Amplificador 400W',   8,  3, 180.00, 320.00, 1),
-                                                                                                                             (1, 2, 'Alto-falante 6x9 200W',      4,  2,  95.00, 170.00, 1),
-                                                                                                                             (1, 1, 'Subwoofer 12" 600W',         2,  2, 230.00, 420.00, 1),  -- estoque no limite
-                                                                                                                             (2, 1, 'Bateria 60Ah',               1,  3, 310.00, 520.00, 1),  -- abaixo do mínimo
-                                                                                                                             (3, 3, 'Cabo RCA 5m',               15,  5,  12.00,  25.00, 1),
-                                                                                                                             (4, 1, 'Strobo LED RGB',             0,  2,  45.00,  89.00, 1),  -- zerado
-                                                                                                                             (1, 1, 'Tweeters Triaxial 120W',     6,  2,  55.00,  95.00, 0);  -- inativo
-
 --
 -- Table structure for table `vw_alertas_estoque`
 --
@@ -330,10 +377,10 @@ DROP TABLE IF EXISTS `vw_alertas_estoque`;
 CREATE TABLE `vw_alertas_estoque` (
   `item_id` int NOT NULL,
   `data_ocorrencia` datetime(6) DEFAULT NULL,
-  `item_nome` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_nome` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `quantidade_atual` int DEFAULT NULL,
   `quantidade_minima` int DEFAULT NULL,
-  `tipo_alerta` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tipo_alerta` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -346,6 +393,14 @@ LOCK TABLES `vw_alertas_estoque` WRITE;
 /*!40000 ALTER TABLE `vw_alertas_estoque` DISABLE KEYS */;
 /*!40000 ALTER TABLE `vw_alertas_estoque` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Dumping events for database 'stockflow'
+--
+
+--
+-- Dumping routines for database 'stockflow'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -356,4 +411,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-13 22:04:02
+-- Dump completed on 2026-06-07 21:22:07
