@@ -737,3 +737,37 @@ resource "aws_cloudwatch_dashboard" "main" {
     ]
   })
 }
+
+resource "aws_sns_topic" "alerts" {
+  name = "alb-healthy-hosts-alerts"
+}
+
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
+resource "aws_cloudwatch_metric_alarm" "healthy_hosts_below_threshold" {
+  for_each = local.healthy_host_alarms
+
+  alarm_name          = "${each.key}-healthy-hosts-below-${each.value.threshold}"
+  alarm_description   = "Dispara quando o target group ${each.key} ficar com menos de ${each.value.threshold} instancias saudaveis"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = each.value.threshold
+  metric_name         = "HealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = 60
+  statistic           = "Minimum"
+  treat_missing_data  = "breaching"
+
+  dimensions = {
+    TargetGroup  = each.value.target_group_arn_suffix
+    LoadBalancer = aws_lb.main.arn_suffix
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
+}

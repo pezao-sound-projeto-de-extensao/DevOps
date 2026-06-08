@@ -127,4 +127,14 @@ locals {
       name = "client"
     }
   }
+   healthy_host_alarms = {
+    web = {
+      target_group_arn_suffix = aws_lb_target_group.web.arn_suffix
+      threshold               = 2
+    }
+    app = {
+      target_group_arn_suffix = aws_lb_target_group.app.arn_suffix
+      threshold               = 2
+    }
+  }
 }
