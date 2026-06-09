@@ -536,13 +536,6 @@ data "aws_iam_instance_profile" "lab" {
   name = "LabInstanceProfile"
 }
 
-resource "aws_s3_object" "db_sql" {
-  bucket = aws_s3_bucket.s3["raw"].bucket
-  key    = "bd.sql"
-  source = "${path.module}/scripts/bd.sql"
-  etag   = filemd5("${path.module}/scripts/bd.sql")
-}
-
 resource "aws_instance" "instance_db" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -550,11 +543,7 @@ resource "aws_instance" "instance_db" {
   vpc_security_group_ids      = local.db.sg_ids
   key_name                    = var.key_name
   associate_public_ip_address = local.db.public_ip
-  iam_instance_profile        = data.aws_iam_instance_profile.lab.name
   user_data                   = local.db.user_data
-  user_data_replace_on_change = true
-
-  depends_on = [aws_s3_object.db_sql]
 
   root_block_device {
     volume_size           = local.db.volume_size
