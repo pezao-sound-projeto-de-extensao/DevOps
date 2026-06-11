@@ -185,7 +185,7 @@ variable "db_password" {
 }
 
 variable "alert_email" {
-  type = string
+  type        = string
   description = "Email de quem receberá notificação da AWS"
-  default = "hercules.pereira@sptech.school"
+  default     = "hercules.pereira@sptech.school"
 }

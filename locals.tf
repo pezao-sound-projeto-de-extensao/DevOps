@@ -134,7 +134,7 @@ locals {
       name = "client"
     }
   }
-   healthy_host_alarms = {
+  healthy_host_alarms = {
     web = {
       target_group_arn_suffix = aws_lb_target_group.web.arn_suffix
       threshold               = 2

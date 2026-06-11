@@ -1,7 +1,7 @@
 resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
-  enable_dns_hostnames  = true
+  enable_dns_hostnames = true
 
   tags = {
     Name = var.vpc_name
@@ -751,7 +751,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
         }
       },
-            {
+      {
         type   = "metric"
         x      = 0
         y      = 0
@@ -802,6 +802,30 @@ resource "aws_cloudwatch_dashboard" "main" {
             ]
           ]
         }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "DB Instance - CPU Utilization"
+          view    = "timeSeries"
+          stacked = false
+          region  = data.aws_region.current.region
+          stat    = "Average"
+          period  = 60
+          metrics = [
+            [
+              "AWS/EC2",
+              "CPUUtilization",
+              "InstanceId",
+              aws_instance.instance_db.id
+            ]
+          ]
+        }
       }
     ]
   })
@@ -835,6 +859,27 @@ resource "aws_cloudwatch_metric_alarm" "healthy_hosts_below_threshold" {
   dimensions = {
     TargetGroup  = each.value.target_group_arn_suffix
     LoadBalancer = aws_lb.main.arn_suffix
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "db_cpu_high" {
+  alarm_name          = "db-cpu-above-85"
+  alarm_description   = "Dispara quando a CPU da instancia do banco ficar acima de 85%"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = 85
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  treat_missing_data  = "missing"
+
+  dimensions = {
+    InstanceId = aws_instance.instance_db.id
   }
 
   alarm_actions = [aws_sns_topic.alerts.arn]
