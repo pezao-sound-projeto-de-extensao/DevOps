@@ -59,6 +59,7 @@ locals {
       user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
         efs_dns      = aws_efs_file_system.efs.dns_name
         html_content = file("${path.module}/scripts/index1a.html")
+        alb_dns      = aws_lb.main.dns_name
     }) }
 
     web-2 = {
@@ -70,6 +71,7 @@ locals {
       user_data = templatefile("${path.module}/scripts/configWeb.sh.tpl", {
         efs_dns      = aws_efs_file_system.efs.dns_name
         html_content = file("${path.module}/scripts/index1b.html")
+        alb_dns      = aws_lb.main.dns_name
     }) }
 
     app-1 = {

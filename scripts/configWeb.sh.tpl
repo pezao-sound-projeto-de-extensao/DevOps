@@ -1,6 +1,7 @@
 #!/bin/bash
 
 sleep 100
+exec > >(tee -a /var/log/web-bootstrap.log) 2>&1
 # Note: We do NOT use 'set -e' globally to allow some failures (like docker pull)
 # Individual commands that MUST succeed are checked explicitly
 
@@ -21,9 +22,30 @@ else
 fi
 
 systemctl enable nginx
-systemctl enable docker
-systemctl start docker
-systemctl is-active --quiet docker || systemctl restart docker
+
+if systemctl list-unit-files | grep -q '^docker\.service'; then
+	systemctl enable docker
+	systemctl start docker || systemctl restart docker || true
+elif systemctl list-unit-files | grep -q '^docker\.socket'; then
+	systemctl enable docker.socket
+	systemctl start docker.socket || systemctl restart docker.socket || true
+fi
+
+# Wait for Docker daemon and capture status for troubleshooting.
+for i in $(seq 1 15); do
+	if docker info >/dev/null 2>&1; then
+		echo "Docker daemon is ready"
+		break
+	fi
+	echo "Waiting Docker daemon... ($i/15)"
+	sleep 2
+done
+
+if ! docker info >/dev/null 2>&1; then
+	echo "WARNING: Docker daemon not ready after retries"
+	systemctl status docker --no-pager || true
+	journalctl -u docker --no-pager -n 100 || true
+fi
 
 mkdir -p /mnt/efs-psnd
 
@@ -84,17 +106,18 @@ systemctl start efs-mount-psnd.service || true
 
 # Pull e run da imagem do frontend
 echo "[$(date)] Pulling Docker image herculessp/pezao-sound-web:main" >> /var/log/pezao-sound-web-bootstrap.log
-if docker pull herculessp/pezao-sound-web:main >> /var/log/pezao-sound-web-bootstrap.log 2>&1; then
+if docker info >/dev/null 2>&1 && docker pull herculessp/pezao-sound-web:main >> /var/log/pezao-sound-web-bootstrap.log 2>&1; then
 	echo "[$(date)] Docker image pull successful" >> /var/log/pezao-sound-web-bootstrap.log
 	docker rm -f pezao-sound-web >/dev/null 2>&1 || true
 	docker run -d \
 		--name pezao-sound-web \
 		--restart unless-stopped \
 		-p 5173:80 \
+		-e VITE_API_BASE_URL="http://${alb_dns}/api" \
 		herculessp/pezao-sound-web:main >> /var/log/pezao-sound-web-bootstrap.log 2>&1
 	echo "[$(date)] Docker container started" >> /var/log/pezao-sound-web-bootstrap.log
 else
-	echo "[$(date)] WARNING: Docker image pull failed. Check image name and Docker Hub access." >> /var/log/pezao-sound-web-bootstrap.log
+	echo "[$(date)] WARNING: Docker unavailable or image pull failed. Check daemon and Docker Hub access." >> /var/log/pezao-sound-web-bootstrap.log
 	echo "Expected: herculessp/pezao-sound-web:main" >> /var/log/pezao-sound-web-bootstrap.log
 fi
 docker ps -a > /var/log/pezao-sound-web-container.log
