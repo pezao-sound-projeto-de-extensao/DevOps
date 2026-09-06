@@ -82,16 +82,28 @@ variable "db_subnet_name" {
   default     = "db_subnet"
 }
 
-variable "db_subnet_cidr" {
+variable "db_subnet_1_cidr" {
   type        = string
-  description = "CIDR da subrede de banco de dados"
-  default     = "10.0.2.0/24"
+  description = "CIDR da subrede 1 de banco de dados"
+  default     = "10.0.2.0/25"
 }
 
-variable "db_subnet_availability_zone" {
+variable "db_subnet_1_availability_zone" {
   type        = string
-  description = "AZ da subrede de banco de dados"
+  description = "AZ da subrede 1 de banco de dados"
   default     = "a"
+}
+
+variable "db_subnet_2_cidr" {
+  type        = string
+  description = "CIDR da subrede 2 de banco de dados"
+  default     = "10.0.2.128/25"
+}
+
+variable "db_subnet_2_availability_zone" {
+  type        = string
+  description = "AZ da subrede 2 de banco de dados"
+  default     = "b"
 }
 
 variable "web_subnet_name" {
@@ -112,22 +124,16 @@ variable "web_subnet_2_cidr" {
   default     = "10.0.3.128/25"
 }
 
-variable "nacl_app_cidr" {
+variable "nacl_alb_cidr" {
   type        = string
-  description = "CIDR para entrada personalizada na app"
-  default     = "10.0.3.0/24"
-}
-
-variable "nacl_web_cidr" {
-  type        = string
-  description = "CIDR para entrada personalizada na web"
+  description = "CIDR para entrada personalizada nas instâncias, corresponde ao CIDR do ALB"
   default     = "10.0.0.0/24"
 }
 
 variable "ami_id" {
   type        = string
   description = "Id da AMI utilizada nas instâncias"
-  default     = "ami-0ec10929233384c7f"
+  default     = "ami-0521cb2d60cfbb1a6"
 }
 
 variable "key_name" {
@@ -148,23 +154,18 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "efs_token" {
-  type        = string
-  description = "Token de criação do EFS"
-  default     = "token"
-}
-
-variable "ebs_availability_zone" {
-  type        = string
-  description = "AZ do EBS"
-  default     = "a"
-}
-
 variable "app_docker_image" {
   type        = string
   description = "URL da imagem da aplicação"
   default     = "herculessp/pezao-sound-api:main"
 }
+
+variable "web_docker_image" {
+  type        = string
+  description = "URL da imagem web"
+  default     = "herculessp/pezao-sound-web:main"
+}
+
 
 variable "db_username" {
   type        = string
@@ -181,11 +182,17 @@ variable "db_name" {
 variable "db_password" {
   type        = string
   description = "Senha do usuário do banco de dados"
-  default     = "StockFlow@2026"
+  default     = "StockFlow2026!"
 }
 
 variable "alert_email" {
   type        = string
   description = "Email de quem receberá notificação da AWS"
   default     = "hercules.pereira@sptech.school"
+}
+
+variable "jwt_secret" {
+  type = string
+  description = "Secret para gerar JWT"
+  default = "supersecretkey1234567890AmandaDanielHerculesIsaakZaqueu"
 }

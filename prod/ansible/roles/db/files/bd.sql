@@ -1,19 +1,6 @@
-CREATE DATABASE IF NOT EXISTS stockflow;
+DROP DATABASE IF EXISTS stockflow;
+CREATE DATABASE stockflow;
 USE stockflow;
-
-DROP TABLE IF EXISTS cargo_permissoes;
-DROP TABLE IF EXISTS imagem_produto;
-DROP TABLE IF EXISTS nota_entrada;
-DROP TABLE IF EXISTS movimentacoes;
-DROP TABLE IF EXISTS alertas;
-DROP TABLE IF EXISTS itens;
-DROP TABLE IF EXISTS categorias;
-DROP TABLE IF EXISTS unidades;
-DROP TABLE IF EXISTS usuarios;
-DROP TABLE IF EXISTS cargos;
-DROP TABLE IF EXISTS permissoes;
-DROP TABLE IF EXISTS itens_seq;
-DROP TABLE IF EXISTS vw_alertas_estoque;
 
 CREATE TABLE cargos (
   id int NOT NULL AUTO_INCREMENT,
