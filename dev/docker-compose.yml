@@ -2,6 +2,8 @@ services:
   floci:
     image: floci/floci:latest
     container_name: floci
+    networks:
+      - dev
     ports:
       - "4566:4566"
     environment:
@@ -9,7 +11,8 @@ services:
     volumes:
       - floci-data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/health"]
+      # A imagem do floci não tem curl nem wget; o bash abre a porta direto.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/4566"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,6 +40,37 @@ services:
       retries: 5
       start_period: 30s
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: stockflow
+      RABBITMQ_DEFAULT_PASS: stockflow
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - dev
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # SMTP falso: captura os e-mails enviados sem entregar a ninguém.
+  # Caixa de entrada: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit-dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - dev
+
   init-s3:
     image: amazon/aws-cli:latest
     container_name: init-s3
@@ -47,16 +81,33 @@ services:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ../s3-dump:/backup
+    networks:
+      - dev
     entrypoint: ["sh", "-c"]
     command:
       - |
+        echo "=== Aguardando Floci ==="
         until aws --endpoint-url http://floci:4566 s3 ls > /dev/null 2>&1; do
           echo "Floci não disponível"
           sleep 2
         done
-        echo "Criando bucket Blobs..."
+
+        echo "=== Criando bucket (se não existir) ==="
         aws --endpoint-url http://floci:4566 s3 mb s3://stockflow-dev || true
-        echo "Bucket Blobs pronto"
+        echo "=== Bucket pronto ==="
+
+        echo "=== Verificando backup para restore ==="
+        if [ ! -d /backup ] || [ -z "$(ls -A /backup 2>/dev/null)" ]; then
+          echo "Nenhum backup encontrado em /backup, pulando restore."
+        else
+          echo "Diretório de backup encontrado, restaurando..."
+          aws --endpoint-url http://floci:4566 \
+            s3 cp /backup s3://stockflow-dev \
+            --recursive
+          echo "=== Restore concluído ==="
+        fi
 
   app:
     build:
@@ -67,10 +118,28 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - DB_URL=jdbc:mysql://mysql:3306/stockflow?useTimezone=true&serverTimezone=UTC&characterEncoding=UTF-8
-      - CORS=http://nginx:80
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/stockflow?serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8
+
+      CORS: "http://localhost:8080"
+      AWS_S3_ENDPOINT: http://floci:4566
+      AWS_S3_BUCKET: stockflow-dev
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_S3_PATH_STYLE_ACCESS: "true"
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: stockflow
+      RABBITMQ_PASSWORD: stockflow
+
+      # E-mail de recuperação de senha: vai para o Mailpit.
+      # O link do e-mail usa o endereço da variável CORS acima.
+      MAIL_HOST: mailpit
     networks:
       - dev
     healthcheck:
@@ -125,3 +194,4 @@ networks:
 volumes:
   floci-data:
   mysql-data:
+  rabbitmq-data:
