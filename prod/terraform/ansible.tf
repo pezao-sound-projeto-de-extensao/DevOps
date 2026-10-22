@@ -35,31 +35,15 @@ resource "local_file" "ansible_app_vars" {
 
   content = yamlencode({
     app_image         = var.app_docker_image
+    web_image         = var.web_docker_image
+    alb_url           = "http://${aws_lb.main.dns_name}/api"
+    frontend_url      = "http://${aws_lb.main.dns_name}"
     rabbitmq_username = var.rabbitmq_username
     rabbitmq_password = var.rabbitmq_password
+    mail_username     = var.mail_username
+    mail_password     = var.mail_password
+    mail_from         = var.mail_from
   })
-}
-
-resource "local_file" "ansible_web_vars" {
-  filename        = "${path.module}/../ansible/inventories/production/group_vars/web.yml"
-  file_permission = "0644"
-
-  content = yamlencode({
-    alb_url   = "http://${aws_lb.main.dns_name}/api"
-    web_image = var.web_docker_image
-  })
-}
-
-resource "null_resource" "configurando_dependencias" {
-  depends_on = [
-    local_file.ansible_inventory,
-    aws_instance.instances,
-  ]
-
-  provisioner "local-exec" {
-    working_dir = "${path.module}/../ansible"
-    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/base.yml"
-  }
 }
 
 resource "null_resource" "configurando_db" {
@@ -75,33 +59,17 @@ resource "null_resource" "configurando_db" {
   }
 }
 
-resource "null_resource" "configurando_app" {
+resource "null_resource" "configurando_instancias" {
   depends_on = [
     local_file.ansible_inventory,
     local_file.ansible_all_vars,
     local_file.ansible_app_vars,
     aws_instance.instances,
-    null_resource.configurando_db,
-    null_resource.configurando_dependencias
+    null_resource.configurando_db
   ]
 
   provisioner "local-exec" {
     working_dir = "${path.module}/../ansible"
-    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/app.yml"
-  }
-}
-
-resource "null_resource" "configurando_web" {
-  depends_on = [
-    local_file.ansible_inventory,
-    local_file.ansible_web_vars,
-    aws_instance.instances,
-    null_resource.configurando_dependencias,
-    null_resource.configurando_app
-  ]
-
-  provisioner "local-exec" {
-    working_dir = "${path.module}/../ansible"
-    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/web.yml"
+    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/deploy.yml"
   }
 }

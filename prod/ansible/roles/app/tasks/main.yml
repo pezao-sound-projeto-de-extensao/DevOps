@@ -1,10 +1,19 @@
+- name: Criar diretórios da stack
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/app/nginx
+    - /opt/app/fluent-bit
+
 - name: Renderizar arquivo .env
   ansible.builtin.template:
     src: app.env.j2
     dest: /opt/app/.env
     mode: "0600"
 
-- name: Renderizar docker-compose
+- name: Renderizar stack do swarm
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: /opt/app/docker-compose.yml
@@ -16,28 +25,19 @@
     dest: /opt/app/nginx/default.conf
     mode: "0644"
 
-- name: Criar diretório do Fluent Bit
-  ansible.builtin.file:
-    path: /opt/app/fluent-bit
-    state: directory
-    mode: "0755"
-
 - name: Renderizar configuração do Fluent Bit
   ansible.builtin.template:
     src: fluent-bit.conf.j2
     dest: /opt/app/fluent-bit/fluent-bit.conf
     mode: "0644"
 
-- name: Subir stack Docker Compose
-  community.docker.docker_compose_v2:
-    project_src: /opt/app
-    state: present
-    pull: always
+- name: Deploy da stack no swarm
+  ansible.builtin.command: docker stack deploy --prune -c /opt/app/docker-compose.yml stockflow
 
-- name: Esperar nginx ficar healthy
-  community.docker.docker_container_info:
-    name: nginx
-  register: nginx_info
-  until: nginx_info.container.State.Health.Status == 'healthy'
-  retries: 30
+- name: Esperar back ficar disponível
+  ansible.builtin.uri:
+    url: http://localhost/api/health
+  register: health
+  until: health.status == 200
+  retries: 60
   delay: 5

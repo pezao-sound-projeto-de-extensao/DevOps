@@ -2,12 +2,12 @@
 bastion ansible_host=${bastion_public_ip}
 
 [app]
-app-1 ansible_host=${app_1_private_ip}
-app-2 ansible_host=${app_2_private_ip}
+app-1 ansible_host=${app_1_private_ip} az=a
+app-2 ansible_host=${app_2_private_ip} az=b
 
 [web]
-web-1 ansible_host=${web_1_private_ip}
-web-2 ansible_host=${web_2_private_ip}
+web-1 ansible_host=${web_1_private_ip} az=a
+web-2 ansible_host=${web_2_private_ip} az=b
 
 [base:children]
 app

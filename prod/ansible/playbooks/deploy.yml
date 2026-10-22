@@ -1,0 +1,65 @@
+- name: Instalar Docker
+  hosts: base
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Esperar SSH ficar disponível
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        sleep: 5
+        timeout: 600
+
+    - name: Instalar Docker
+      ansible.builtin.package:
+        name: docker
+        state: present
+
+    - name: Habilitar e iniciar Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+- name: Iniciar um swarm por AZ (manager = app)
+  hosts: app
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Iniciar swarm
+      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_host }}
+
+    - name: Token de worker
+      ansible.builtin.command: docker swarm join-token -q worker
+      register: worker_token
+      changed_when: false
+
+- name: Juntar o web ao swarm da mesma AZ
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    manager: "{{ groups['app'] | map('extract', hostvars) | selectattr('az', 'equalto', az) | map(attribute='inventory_hostname') | first }}"
+  tasks:
+    - name: Entrar no swarm como worker
+      ansible.builtin.command: >
+        docker swarm join --token {{ hostvars[manager].worker_token.stdout }}
+        {{ hostvars[manager].ansible_host }}:2377
+
+- name: Deploy da stack
+  hosts: app
+  become: true
+  gather_facts: false
+  roles:
+    - app
+
+- name: Esperar front ficar disponível
+  hosts: web
+  gather_facts: false
+  tasks:
+    - name: Esperar front responder
+      ansible.builtin.uri:
+        url: http://localhost/
+      register: health
+      until: health.status == 200
+      retries: 60
+      delay: 5
