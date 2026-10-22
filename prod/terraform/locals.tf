@@ -66,7 +66,7 @@ locals {
       name        = "web-1"
       subnet_id   = aws_subnet.subnets["web-1"].id
       public_ip   = false
-      sg_ids      = [aws_security_group.web.id]
+      sg_ids      = [aws_security_group.web.id, aws_security_group.swarm.id]
       volume_size = 15
     }
 
@@ -74,7 +74,7 @@ locals {
       name        = "web-2"
       subnet_id   = aws_subnet.subnets["web-2"].id
       public_ip   = false
-      sg_ids      = [aws_security_group.web.id]
+      sg_ids      = [aws_security_group.web.id, aws_security_group.swarm.id]
       volume_size = 15
     }
 
@@ -82,7 +82,7 @@ locals {
       name        = "app-1"
       subnet_id   = aws_subnet.subnets["app-1"].id
       public_ip   = false
-      sg_ids      = [aws_security_group.app.id]
+      sg_ids      = [aws_security_group.app.id, aws_security_group.swarm.id]
       volume_size = 15
     }
 
@@ -90,7 +90,7 @@ locals {
       name        = "app-2"
       subnet_id   = aws_subnet.subnets["app-2"].id
       public_ip   = false
-      sg_ids      = [aws_security_group.app.id]
+      sg_ids      = [aws_security_group.app.id, aws_security_group.swarm.id]
       volume_size = 15
     }
   }

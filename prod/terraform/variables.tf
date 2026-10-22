@@ -208,3 +208,22 @@ variable "rabbitmq_password" {
   description = "Senha do RabbitMQ local das instâncias de app"
   default     = "stockflow"
 }
+
+variable "mail_username" {
+  type        = string
+  description = "Usuário SMTP do Amazon SES"
+  default     = ""
+}
+
+variable "mail_password" {
+  type        = string
+  description = "Senha SMTP do Amazon SES"
+  default     = ""
+  sensitive   = true
+}
+
+variable "mail_from" {
+  type        = string
+  description = "Remetente dos e-mails (verificado no SES)"
+  default     = "nao-responda@stockflow.local"
+}

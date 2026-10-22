@@ -133,3 +133,40 @@ resource "aws_security_group" "db" {
     Name = "db-sg"
   }
 }
+
+resource "aws_security_group" "swarm" {
+  name   = "swarm-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port = 2377
+    to_port   = 2377
+    protocol  = "tcp"
+    self      = true
+  }
+
+  ingress {
+    from_port = 7946
+    to_port   = 7946
+    protocol  = "tcp"
+    self      = true
+  }
+
+  ingress {
+    from_port = 7946
+    to_port   = 7946
+    protocol  = "udp"
+    self      = true
+  }
+
+  ingress {
+    from_port = 4789
+    to_port   = 4789
+    protocol  = "udp"
+    self      = true
+  }
+
+  tags = {
+    Name = "swarm-sg"
+  }
+}

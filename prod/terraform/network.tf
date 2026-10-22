@@ -165,6 +165,42 @@ resource "aws_network_acl" "app" {
     to_port    = 65535
   }
 
+  ingress {
+    rule_no    = 130
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 7946
+    to_port    = 7946
+  }
+
+  ingress {
+    rule_no    = 140
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 4789
+    to_port    = 4789
+  }
+
+  egress {
+    rule_no    = 130
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 7946
+    to_port    = 7946
+  }
+
+  egress {
+    rule_no    = 140
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 4789
+    to_port    = 4789
+  }
+
   tags = {
     Name = "app-nacl"
   }
@@ -229,6 +265,42 @@ resource "aws_network_acl" "web" {
     cidr_block = "0.0.0.0/0"
     from_port  = 1024
     to_port    = 65535
+  }
+
+  ingress {
+    rule_no    = 130
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 7946
+    to_port    = 7946
+  }
+
+  ingress {
+    rule_no    = 140
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 4789
+    to_port    = 4789
+  }
+
+  egress {
+    rule_no    = 130
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 7946
+    to_port    = 7946
+  }
+
+  egress {
+    rule_no    = 140
+    protocol   = "udp"
+    action     = "allow"
+    cidr_block = var.vpc_cidr
+    from_port  = 4789
+    to_port    = 4789
   }
 
   tags = {
