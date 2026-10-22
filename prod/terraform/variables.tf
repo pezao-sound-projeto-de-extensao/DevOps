@@ -154,15 +154,21 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
+variable "image_tag" {
+  type        = string
+  description = "Tag das imagens no ECR"
+  default     = "main"
+}
+
 variable "app_docker_image" {
   type        = string
-  description = "URL da imagem da aplicação"
+  description = "Imagem da aplicação no Docker Hub, copiada para o ECR"
   default     = "herculessp/pezao-sound-api:main"
 }
 
 variable "web_docker_image" {
   type        = string
-  description = "URL da imagem web"
+  description = "Imagem web no Docker Hub, copiada para o ECR"
   default     = "herculessp/pezao-sound-web:main"
 }
 

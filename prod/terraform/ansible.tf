@@ -34,8 +34,9 @@ resource "local_file" "ansible_app_vars" {
   file_permission = "0644"
 
   content = yamlencode({
-    app_image         = var.app_docker_image
-    web_image         = var.web_docker_image
+    app_image         = "${aws_ecr_repository.images["api"].repository_url}:${var.image_tag}"
+    web_image         = "${aws_ecr_repository.images["web"].repository_url}:${var.image_tag}"
+    ecr_registry      = split("/", aws_ecr_repository.images["api"].repository_url)[0]
     alb_url           = "http://${aws_lb.main.dns_name}/api"
     frontend_url      = "http://${aws_lb.main.dns_name}"
     rabbitmq_username = var.rabbitmq_username
@@ -65,7 +66,8 @@ resource "null_resource" "configurando_instancias" {
     local_file.ansible_all_vars,
     local_file.ansible_app_vars,
     aws_instance.instances,
-    null_resource.configurando_db
+    null_resource.configurando_db,
+    null_resource.importar_imagens_dockerhub
   ]
 
   provisioner "local-exec" {

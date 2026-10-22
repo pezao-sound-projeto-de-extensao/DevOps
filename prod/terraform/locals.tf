@@ -94,6 +94,11 @@ locals {
       volume_size = 15
     }
   }
+  dockerhub_images = {
+    api = var.app_docker_image
+    web = var.web_docker_image
+  }
+
   s3s = {
     blobs = {
       name = "blobs"
