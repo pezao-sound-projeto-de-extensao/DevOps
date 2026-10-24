@@ -582,3 +582,20 @@ CREATE TABLE encomendas (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
+  CREATE TABLE tokens_recuperacao_senha (
+                                id BIGINT NOT NULL AUTO_INCREMENT,
+                                token_hash VARCHAR(100) NOT NULL,
+                                expira_em TIMESTAMP NOT NULL,
+                                usado_em TIMESTAMP NULL,
+                                criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                usuario_id INT NOT NULL,
+                                PRIMARY KEY (id),
+                                KEY idx_token_recuperacao_usuario (usuario_id),
+                                CONSTRAINT fk_tokens_recuperacao_usuario
+                                    FOREIGN KEY (usuario_id)
+                                        REFERENCES usuarios(id)
+                                        ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;

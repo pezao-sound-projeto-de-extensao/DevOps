@@ -14,103 +14,60 @@ Infraestrutura para atender aos requisitos do projeto de Pesquisa e Inovação d
 
 ```bash
 .
-├── ansible
-│   ├── ansible.cfg
-│   ├── inventories
-│   │   └── production
-│   │       ├── group_vars
-│   │       │   ├── all.yml
-│   │       │   ├── app.yml
-│   │       │   └── web.yml
-│   │       └── hosts.ini
-│   ├── playbooks
-│   │   ├── app.yml
-│   │   ├── base.yml
-│   │   ├── db.yml
-│   │   └── web.yml
-│   ├── requirements.yml
-│   └── roles
-│       ├── app
-│       │   ├── tasks
-│       │   │   └── main.yml
-│       │   └── templates
-│       │       ├── app.env.j2
-│       │       ├── docker-compose.yml.j2
-│       │       └── nginx.conf.j2
-│       ├── base
-│       │   └── tasks
-│       │       └── main.yml
-│       ├── db
-│       │   ├── files
-│       │   │   └── bd.sql
-│       │   └── tasks
-│       │       └── main.yml
-│       └── web
-│           ├── tasks
-│           │   └── main.yml
-│           └── templates
-│               └── web.env.j2
-└── terraform
-    ├── ansible.tf
-    ├── chave.pem
-    ├── compute.tf
-    ├── database.tf
-    ├── locals.tf
-    ├── network.tf
-    ├── providers.tf
-    ├── scripts
-    │   └── hosts.ini.tftpl
-    ├── security.tf
-    ├── storage.tf
-    ├── terraform.tfstate
-    ├── terraform.tfstate.backup
-    └── variables.tf
-
-
+├── dev
+│   ├── docker-compose.yml
+│   └── nginx.conf
+└── prod
+    ├── ansible
+    │   ├── ansible.cfg
+    │   ├── inventories/production    # gerado pelo Terraform
+    │   ├── playbooks
+    │   │   ├── db.yml
+    │   │   └── deploy.yml
+    │   └── roles
+    │       ├── app
+    │       └── db
+    └── terraform
 ```
-
-## Organização do projeto
-
-### Terraform
-
-A pasta `terraform/` concentra o provisionamento da infraestrutura na AWS, com a configuração separada por responsabilidade.
-
-- `providers.tf`: definição do provider.
-- `variables.tf`: variáveis de entrada.
-- `locals.tf`: valores auxiliares e padronizações.
-- `network.tf`: camada de rede.
-- `security.tf`: regras e controles de acesso.
-- `compute.tf`: recursos computacionais.
-- `database.tf`: componentes relacionados ao banco.
-- `storage.tf`: recursos de armazenamento.
-- `ansible.tf`: integração entre a infraestrutura provisionada e a automação do Ansible.
-- `scripts/hosts.ini.tftpl`: template para geração de inventário.
-
-### Ansible
-
-A pasta `ansible/` concentra a configuração dos hosts provisionados.
-
-- `inventories/production/`: inventário do ambiente.
-- `playbooks/base.yml`: preparação base das instâncias.
-- `playbooks/db.yml`: configuração do banco de dados.
-- `playbooks/app.yml`: configuração e publicação da aplicação.
-- `playbooks/web.yml`: configuração e publicação do website.
 
 ## Ambientes
 
-- `/prod`: arquitetura completa
-- `/dev`:  arquitetura mínima para redução de custos
+- `dev`: stack local com Docker Compose (app, web, MySQL, RabbitMQ, Floci como S3 e Mailpit).
+- `prod`: infraestrutura na AWS criada pelo Terraform e configurada pelo Ansible.
 
-## Fluxo de execução
+## Arquitetura de produção
 
-### O Terraform chama o ansible automaticamente
+- Duas AZs. Em cada uma há uma instância de back (app) e uma de front (web).
+- Cada AZ tem seu próprio Docker Swarm: a instância app é o manager e a web é o worker.
+- O back (API com 2 réplicas, nginx, RabbitMQ e Fluent Bit) roda no manager; o front roda no worker.
+- O ALB envia `/api` para as instâncias app e o resto para as instâncias web.
+- As imagens ficam no ECR (`pezao-sound-api` e `pezao-sound-web`).
+- Banco no RDS MySQL (multi-AZ) e arquivos e logs no S3.
+
+## Como subir
+
+Pré-requisitos na máquina que roda o Terraform: Terraform, Ansible, AWS CLI e GitHub CLI.
+
+1. Coloque as credenciais da sessão da AWS em `~/.aws/credentials`.
+2. Faça login no GitHub CLI (uma vez): `gh auth login`. A conta precisa poder criar secrets e rodar Actions nos repositórios Back-end e Front-end.
+3. Rode:
 
 ```bash
-cd ansible
-ansible-galaxy install -r requirements.yml 
-cd ..
-cd terraform
+cd prod/terraform
 terraform init
-terraform plan
-terraform apply
+terraform apply -auto-approve
+```
+
+O que acontece durante o apply:
+
+1. São criados a rede, as instâncias, o RDS e os repositórios do ECR.
+2. Assim que o ECR existe, o Terraform grava as credenciais da AWS como secrets nos repositórios do GitHub e dispara o workflow `ecr.yml` do Back-end e do Front-end, que fazem o build e enviam as imagens para o ECR. Isso roda enquanto o RDS é criado.
+3. Com o RDS pronto, o Ansible roda o script do banco (`db.yml`).
+4. Com o banco e as imagens prontos, o Ansible (`deploy.yml`) instala o Docker, cria os swarms e faz o deploy da stack.
+
+## Como destruir
+
+```bash
+cd prod/terraform
+terraform destroy -auto-approve
 ```

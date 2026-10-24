@@ -45,10 +45,6 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "web" {
-  depends_on = [
-    null_resource.configurando_instancias
-  ]
-
   name        = "web-tg"
   port        = 80
   protocol    = "HTTP"
@@ -64,10 +60,6 @@ resource "aws_lb_target_group" "web" {
 }
 
 resource "aws_lb_target_group" "app" {
-  depends_on = [
-    null_resource.configurando_instancias
-  ]
-
   name        = "app-tg"
   port        = 80
   protocol    = "HTTP"

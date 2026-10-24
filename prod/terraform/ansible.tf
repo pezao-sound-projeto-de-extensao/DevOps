@@ -25,7 +25,7 @@ resource "local_file" "ansible_all_vars" {
     //s3 = aws_s3_bucket.s3["blobs"].bucket
     s3     = "blobs-437920188033-us-east-1-an"
     secret = var.jwt_secret
-    cors   = aws_lb.main.dns_name
+    cors   = "http://${aws_lb.main.dns_name}"
   })
 }
 
@@ -34,13 +34,12 @@ resource "local_file" "ansible_app_vars" {
   file_permission = "0644"
 
   content = yamlencode({
-    app_image         = "${aws_ecr_repository.images["api"].repository_url}:${var.image_tag}"
-    web_image         = "${aws_ecr_repository.images["web"].repository_url}:${var.image_tag}"
-    ecr_registry      = split("/", aws_ecr_repository.images["api"].repository_url)[0]
+    app_image         = "${aws_ecr_repository.images["api"].repository_url}:main"
+    web_image         = "${aws_ecr_repository.images["web"].repository_url}:main"
     alb_url           = "http://${aws_lb.main.dns_name}/api"
-    frontend_url      = "http://${aws_lb.main.dns_name}"
     rabbitmq_username = var.rabbitmq_username
     rabbitmq_password = var.rabbitmq_password
+    mail_host         = var.mail_host
     mail_username     = var.mail_username
     mail_password     = var.mail_password
     mail_from         = var.mail_from
@@ -67,7 +66,7 @@ resource "null_resource" "configurando_instancias" {
     local_file.ansible_app_vars,
     aws_instance.instances,
     null_resource.configurando_db,
-    null_resource.importar_imagens_dockerhub
+    null_resource.build_imagens
   ]
 
   provisioner "local-exec" {

@@ -6,8 +6,6 @@
     - name: Esperar SSH ficar disponível
       ansible.builtin.wait_for_connection:
         delay: 10
-        sleep: 5
-        timeout: 600
 
     - name: Instalar Docker
       ansible.builtin.package:

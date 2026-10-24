@@ -34,7 +34,7 @@
 - name: Login no ECR
   ansible.builtin.shell: >
     aws ecr get-login-password --region us-east-1
-    | docker login --username AWS --password-stdin {{ ecr_registry }}
+    | docker login --username AWS --password-stdin {{ app_image.split('/')[0] }}
 
 - name: Deploy da stack no swarm
   ansible.builtin.command: docker stack deploy --with-registry-auth --prune -c /opt/app/docker-compose.yml stockflow

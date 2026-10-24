@@ -154,24 +154,6 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
-variable "image_tag" {
-  type        = string
-  description = "Tag das imagens no ECR"
-  default     = "main"
-}
-
-variable "app_docker_image" {
-  type        = string
-  description = "Imagem da aplicação no Docker Hub, copiada para o ECR"
-  default     = "herculessp/pezao-sound-api:main"
-}
-
-variable "web_docker_image" {
-  type        = string
-  description = "Imagem web no Docker Hub, copiada para o ECR"
-  default     = "herculessp/pezao-sound-web:main"
-}
-
 
 variable "db_username" {
   type        = string
@@ -215,21 +197,27 @@ variable "rabbitmq_password" {
   default     = "stockflow"
 }
 
+variable "mail_host" {
+  type        = string
+  description = "Servidor SMTP"
+  default     = "smtp.gmail.com"
+}
+
 variable "mail_username" {
   type        = string
-  description = "Usuário SMTP do Amazon SES"
+  description = "Usuário SMTP"
   default     = ""
 }
 
 variable "mail_password" {
   type        = string
-  description = "Senha SMTP do Amazon SES"
+  description = "Senha SMTP"
   default     = ""
   sensitive   = true
 }
 
 variable "mail_from" {
   type        = string
-  description = "Remetente dos e-mails (verificado no SES)"
+  description = "Remetente dos e-mails"
   default     = "nao-responda@stockflow.local"
 }
