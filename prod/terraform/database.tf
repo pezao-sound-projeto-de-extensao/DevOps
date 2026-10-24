@@ -1,3 +1,13 @@
+resource "aws_db_parameter_group" "mysql" {
+  name   = "app-db-mysql8"
+  family = "mysql8.0"
+
+  parameter {
+    name  = "time_zone"
+    value = "Brazil/East"
+  }
+}
+
 resource "aws_db_instance" "instance_db" {
   identifier        = "app-db"
   engine            = "mysql"
@@ -12,6 +22,8 @@ resource "aws_db_instance" "instance_db" {
   password = var.db_password
 
   db_subnet_group_name   = aws_db_subnet_group.db.name
+  parameter_group_name   = aws_db_parameter_group.mysql.name
+  apply_immediately      = true
   vpc_security_group_ids = [aws_security_group.db.id]
 
   publicly_accessible = false

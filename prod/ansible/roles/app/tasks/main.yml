@@ -46,3 +46,45 @@
   until: health.status == 200
   retries: 60
   delay: 5
+
+- name: Instalar script de autodeploy
+  ansible.builtin.copy:
+    src: autodeploy.sh
+    dest: /usr/local/bin/autodeploy.sh
+    mode: "0755"
+  tags: autodeploy
+
+- name: Criar serviço e timer do autodeploy
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    content: "{{ item.content }}"
+    mode: "0644"
+  loop:
+    - name: autodeploy.service
+      content: |
+        [Unit]
+        Description=Atualiza o swarm quando a tag :main muda no ECR
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/autodeploy.sh
+    - name: autodeploy.timer
+      content: |
+        [Unit]
+        Description=Checa o ECR a cada minuto
+
+        [Timer]
+        OnBootSec=2min
+        OnUnitActiveSec=1min
+
+        [Install]
+        WantedBy=timers.target
+  tags: autodeploy
+
+- name: Habilitar timer do autodeploy
+  ansible.builtin.systemd_service:
+    name: autodeploy.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+  tags: autodeploy

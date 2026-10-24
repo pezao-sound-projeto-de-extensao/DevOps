@@ -157,6 +157,15 @@ resource "aws_network_acl" "app" {
   }
 
   egress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 587
+    to_port    = 587
+  }
+
+  egress {
     rule_no    = 120
     protocol   = "tcp"
     action     = "allow"
