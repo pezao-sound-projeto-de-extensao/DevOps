@@ -8,7 +8,7 @@ resource "local_file" "ansible_inventory" {
     web_2_private_ip  = aws_instance.instances["web-2"].private_ip
     app_1_private_ip  = aws_instance.instances["app-1"].private_ip
     app_2_private_ip  = aws_instance.instances["app-2"].private_ip
-    private_key_path  = "../terraform/${var.key_name}.pem"
+    private_key_path  = pathexpand(var.local_ssh_private_key_path)
   })
 }
 
@@ -55,7 +55,7 @@ resource "null_resource" "configurando_db" {
 
   provisioner "local-exec" {
     working_dir = "${path.module}/../ansible"
-    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/db.yml"
+    command     = "ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_ROLES_PATH=roles ansible-playbook -i inventories/production/hosts.ini playbooks/db.yml"
   }
 }
 
@@ -71,6 +71,6 @@ resource "null_resource" "configurando_instancias" {
 
   provisioner "local-exec" {
     working_dir = "${path.module}/../ansible"
-    command     = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/production/hosts.ini playbooks/deploy.yml"
+    command     = "ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_ROLES_PATH=roles ansible-playbook -i inventories/production/hosts.ini playbooks/deploy.yml"
   }
 }

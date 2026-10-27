@@ -145,7 +145,7 @@ variable "key_name" {
 variable "local_ssh_private_key_path" {
   type        = string
   description = "Caminho local da chave privada PEM usada para acessar as instancias via bastion"
-  default     = "./chave.pem"
+  default     = "~/.ssh/chave.pem"
 }
 
 variable "instance_type" {
