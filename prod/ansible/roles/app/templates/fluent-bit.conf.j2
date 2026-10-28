@@ -1,19 +1,59 @@
 [SERVICE]
-    flush        5
+    flush        1
     log_level    warn
+    parsers_file /fluent-bit/etc/parsers.conf
+    storage.path /fluent-bit/buffer
+    # Espera máxima entre retentativas (padrão 2000 s)
+    scheduler.cap 60
 
 [INPUT]
-    name   forward
-    listen 0.0.0.0
-    port   24224
+    name         forward
+    listen       0.0.0.0
+    port         24224
+    storage.type filesystem
+
+[INPUT]
+    name            fluentbit_metrics
+    tag             internal_metrics
+    scrape_interval 15
+
+# Linhas JSON (backend) viram campos; texto passa intacto
+[FILTER]
+    name         parser
+    match        *
+    key_name     log
+    parser       json
+    reserve_data on
+
+[FILTER]
+    name   record_modifier
+    match  *
+    record env production
+    record host {{ inventory_hostname }}
+    record origin container-logs
+
+# Tag do logging driver (app, nginx, rabbitmq) -> campo service
+[FILTER]
+    name  lua
+    match *
+    call  set_service
+    code  function set_service(tag, ts, record) record["service"] = tag return 2, ts, record end
+
+# Alloy na EC2 de observabilidade (API de push do Loki)
+[OUTPUT]
+    name        loki
+    match       *
+    host        {{ otel_endpoint_ip }}
+    port        3500
+    label_keys  $env,$origin,$service,$host
+    line_format json
+    retry_limit no_limits
+    storage.total_limit_size 1G
 
 [OUTPUT]
-    name             s3
-    match            *
-    bucket           {{ s3 }}
-    region           us-east-1
-    store_dir        /fluent-bit/buffer/s3
-    total_file_size  10M
-    upload_timeout   5m
-    use_put_object   On
-    s3_key_format    /logs/$TAG/%Y/%m/%d/%H%M%S-{{ inventory_hostname }}-$UUID.log
+    name      prometheus_remote_write
+    match     internal_metrics
+    host      {{ otel_endpoint_ip }}
+    port      9999
+    uri       /api/v1/metrics/write
+    add_label host {{ inventory_hostname }}
