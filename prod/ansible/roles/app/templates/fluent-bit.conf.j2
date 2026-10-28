@@ -17,7 +17,6 @@
     tag             internal_metrics
     scrape_interval 15
 
-# Linhas JSON (backend) viram campos; texto passa intacto
 [FILTER]
     name         parser
     match        *
@@ -32,14 +31,12 @@
     record host {{ inventory_hostname }}
     record origin container-logs
 
-# Tag do logging driver (app, nginx, rabbitmq) -> campo service
 [FILTER]
     name  lua
     match *
     call  set_service
     code  function set_service(tag, ts, record) record["service"] = tag return 2, ts, record end
 
-# Alloy na EC2 de observabilidade (API de push do Loki)
 [OUTPUT]
     name        loki
     match       *

@@ -1,6 +1,7 @@
 x-fluentd: &fluentd
   fluentd-address: "127.0.0.1:24224"
   fluentd-async: "true"
+  fluentd-sub-second-precision: "true"
 
 x-back: &back
   placement:
@@ -43,6 +44,24 @@ services:
     image: {{ app_image }}
     env_file:
       - /opt/app/.env
+    environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar"
+      OTEL_SERVICE_NAME: app
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://{{ otel_endpoint_ip }}:4318"
+      OTEL_RESOURCE_ATTRIBUTES: "host.name={{ inventory_hostname }},cloud.availability_zone={{ az }},service.instance.id={{ inventory_hostname }}-{% raw %}{{.Task.Slot}}{% endraw %}"
+      OTEL_INSTRUMENTATION_JDBC_EXPERIMENTAL_SQLCOMMENTER_ENABLED: "true"
+      OTEL_JAVAAGENT_EXTENSIONS: /otel/pyroscope-otel-javaagent-extension.jar
+      OTEL_PYROSCOPE_START_PROFILING: "true"
+      OTEL_PYROSCOPE_ADD_PROFILE_URL: "false"
+      OTEL_PYROSCOPE_ADD_PROFILE_BASELINE_URL: "false"
+      PYROSCOPE_APPLICATION_NAME: app
+      PYROSCOPE_SERVER_ADDRESS: "http://{{ otel_endpoint_ip }}:4040"
+      PYROSCOPE_LABELS: "host={{ inventory_hostname }}"
+      PYROSCOPE_FORMAT: jfr
+      PYROSCOPE_PROFILER_EVENT: itimer
+      PYROSCOPE_PROFILER_ALLOC: 512k
+      PYROSCOPE_PROFILER_LOCK: 10ms
+      PYROSCOPE_UPLOAD_INTERVAL: 15s
     logging:
       driver: fluentd
       options:
