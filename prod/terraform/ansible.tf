@@ -22,10 +22,9 @@ resource "local_file" "ansible_all_vars" {
     db_name     = var.db_name
     db_username = var.db_username
     db_password = var.db_password
-    //s3 = aws_s3_bucket.s3["blobs"].bucket
-    s3     = "blobs-437920188033-us-east-1-an"
-    secret = var.jwt_secret
-    cors   = "http://${aws_lb.main.dns_name}"
+    s3          = terraform_data.s3["blobs"].output
+    secret      = var.jwt_secret
+    cors        = "http://${aws_lb.main.dns_name}"
   })
 }
 
@@ -43,6 +42,7 @@ resource "local_file" "ansible_app_vars" {
     mail_username     = var.mail_username
     mail_password     = var.mail_password
     mail_from         = var.mail_from
+    otel_endpoint_ip  = var.otel_endpoint_ip
   })
 }
 
