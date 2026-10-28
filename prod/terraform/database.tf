@@ -6,6 +6,21 @@ resource "aws_db_parameter_group" "mysql" {
     name  = "time_zone"
     value = "Brazil/East"
   }
+
+  parameter {
+    name  = "slow_query_log"
+    value = "1"
+  }
+
+  parameter {
+    name  = "long_query_time"
+    value = var.rds_long_query_time
+  }
+
+  parameter {
+    name  = "log_output"
+    value = "FILE"
+  }
 }
 
 resource "aws_db_instance" "instance_db" {
@@ -27,9 +42,12 @@ resource "aws_db_instance" "instance_db" {
   vpc_security_group_ids = [aws_security_group.db.id]
 
   publicly_accessible = false
-  multi_az            = true
+  multi_az            = false
   skip_final_snapshot = true
   deletion_protection = false
+
+  enabled_cloudwatch_logs_exports = ["error", "slowquery"]
+  depends_on                      = [aws_cloudwatch_log_group.rds]
 
   backup_retention_period = 7
   backup_window           = "03:00-04:00"
