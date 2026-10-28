@@ -164,3 +164,15 @@ resource "aws_cloudwatch_metric_alarm" "db_cpu_high" {
   ok_actions    = [aws_sns_topic.alerts.arn]
 }
 */
+
+
+resource "aws_cloudwatch_log_group" "rds" {
+  for_each          = toset(["error", "slowquery"])
+  name              = "/aws/rds/instance/app-db/${each.key}"
+  retention_in_days = 3
+}
+
+resource "aws_cloudwatch_log_group" "waf" {
+  name              = "aws-waf-logs-main-alb-waf"
+  retention_in_days = 3
+}
