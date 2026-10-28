@@ -221,3 +221,15 @@ variable "mail_from" {
   description = "Remetente dos e-mails"
   default     = "nao-responda@stockflow.local"
 }
+
+variable "rds_long_query_time" {
+  description = "Segundos para uma query entrar no slow query log. 0.2 temporariamente na demo do sqlcommenter."
+  type        = string
+  default     = "1"
+}
+
+variable "otel_endpoint_ip" {
+  description = "IP privado fixo da EC2 de observabilidade (private_ip no repo de observabilidade). Destino do Fluent Bit e do OTel Agent."
+  type        = string
+  default     = "10.0.2.120"
+}
