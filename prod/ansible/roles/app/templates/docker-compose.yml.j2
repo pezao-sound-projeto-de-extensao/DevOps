@@ -18,7 +18,8 @@ services:
     volumes:
       - /opt/app/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - fluent-bit-buffer:/fluent-bit/buffer
-    deploy: *back
+    deploy:
+      mode: global
 
   rabbitmq:
     image: rabbitmq:3-alpine
@@ -48,7 +49,7 @@ services:
       JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar"
       OTEL_SERVICE_NAME: app
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://{{ otel_endpoint_ip }}:4318"
-      OTEL_RESOURCE_ATTRIBUTES: "host.name={{ inventory_hostname }},cloud.availability_zone={{ az }},service.instance.id={{ inventory_hostname }}-{% raw %}{{.Task.Slot}}{% endraw %}"
+      OTEL_RESOURCE_ATTRIBUTES: "host.name={{ inventory_hostname }}-{{ az }},cloud.availability_zone={{ az }},service.instance.id={{ inventory_hostname }}-{{ az }}-{% raw %}{{.Task.Slot}}{% endraw %}"
       OTEL_INSTRUMENTATION_JDBC_EXPERIMENTAL_SQLCOMMENTER_ENABLED: "true"
       OTEL_JAVAAGENT_EXTENSIONS: /otel/pyroscope-otel-javaagent-extension.jar
       OTEL_PYROSCOPE_START_PROFILING: "true"
@@ -56,7 +57,7 @@ services:
       OTEL_PYROSCOPE_ADD_PROFILE_BASELINE_URL: "false"
       PYROSCOPE_APPLICATION_NAME: app
       PYROSCOPE_SERVER_ADDRESS: "http://{{ otel_endpoint_ip }}:4040"
-      PYROSCOPE_LABELS: "host={{ inventory_hostname }}"
+      PYROSCOPE_LABELS: "host={{ inventory_hostname }}-{{ az }}"
       PYROSCOPE_FORMAT: jfr
       PYROSCOPE_PROFILER_EVENT: itimer
       PYROSCOPE_PROFILER_ALLOC: 512k
@@ -106,6 +107,11 @@ services:
       - target: 80
         published: 80
         mode: host
+    logging:
+      driver: fluentd
+      options:
+        <<: *fluentd
+        tag: web
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:80"]
       interval: 30s
