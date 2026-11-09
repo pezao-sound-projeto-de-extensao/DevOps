@@ -28,7 +28,7 @@
     name   record_modifier
     match  *
     record env production
-    record host {{ inventory_hostname }}
+    record host {{ inventory_hostname }}-{{ az }}
     record origin container-logs
 
 [FILTER]
@@ -53,4 +53,4 @@
     host      {{ otel_endpoint_ip }}
     port      9999
     uri       /api/v1/metrics/write
-    add_label host {{ inventory_hostname }}
+    add_label host {{ inventory_hostname }}-{{ az }}
