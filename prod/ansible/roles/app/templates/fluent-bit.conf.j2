@@ -17,6 +17,13 @@
     tag             internal_metrics
     scrape_interval 15
 
+# Junta o stack trace em texto (stderr) num registro só; o Docker manda uma linha por registro
+[FILTER]
+    name                  multiline
+    match                 *
+    multiline.key_content log
+    multiline.parser      java
+
 [FILTER]
     name         parser
     match        *

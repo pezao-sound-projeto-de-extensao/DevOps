@@ -8,7 +8,7 @@ resource "local_file" "ansible_inventory" {
     web_2_private_ip  = aws_instance.instances["web-2"].private_ip
     app_1_private_ip  = aws_instance.instances["app-1"].private_ip
     app_2_private_ip  = aws_instance.instances["app-2"].private_ip
-    private_key_path  = pathexpand(var.local_ssh_private_key_path)
+    private_key_path  = "../terraform/${var.key_name}.pem"
   })
 }
 
@@ -43,6 +43,7 @@ resource "local_file" "ansible_app_vars" {
     mail_password     = var.mail_password
     mail_from         = var.mail_from
     otel_endpoint_ip  = var.otel_endpoint_ip
+    vpc_cidr          = var.vpc_cidr
   })
 }
 
