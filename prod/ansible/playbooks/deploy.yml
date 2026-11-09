@@ -43,6 +43,25 @@
         docker swarm join --token {{ hostvars[manager].worker_token.stdout }}
         {{ hostvars[manager].ansible_host }}:2377
 
+- name: Configurar o Fluent Bit nos nós web
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    otel_endpoint_ip: "{{ hostvars[groups['app'][0]].otel_endpoint_ip }}"
+  tasks:
+    - name: Criar diretório do Fluent Bit
+      ansible.builtin.file:
+        path: /opt/app/fluent-bit
+        state: directory
+        mode: "0755"
+
+    - name: Renderizar configuração do Fluent Bit
+      ansible.builtin.template:
+        src: ../roles/app/templates/fluent-bit.conf.j2
+        dest: /opt/app/fluent-bit/fluent-bit.conf
+        mode: "0644"
+
 - name: Deploy da stack
   hosts: app
   become: true
